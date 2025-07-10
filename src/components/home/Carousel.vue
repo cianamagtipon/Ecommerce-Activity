@@ -92,7 +92,10 @@ const carouselSlides = [
   align-items: flex-start;
   pointer-events: none;
   color: white;
-  padding: 4rem;
+  padding-top: 4rem;
+  padding-bottom: 0.2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
   inset: 0;
   z-index: 2;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);

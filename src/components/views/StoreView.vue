@@ -8,4 +8,8 @@ import Store from '../Store.vue'
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.store {
+  padding: 2rem;
+}
+</style>
