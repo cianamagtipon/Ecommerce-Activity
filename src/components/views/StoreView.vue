@@ -1,6 +1,10 @@
+<script setup>
+import Store from '../Store.vue'
+</script>
+
 <template>
   <div class="store">
-    <h1>This is where you buy stuff</h1>
+    <Store />
   </div>
 </template>
 
