@@ -10,9 +10,22 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/about',
-      name: 'about',
-      component: () => import('../components/views/AboutView.vue'),
+      path: '/home',
+      redirect: '/',
+    },
+    {
+      path: '/store',
+      name: 'store',
+      component: () => import('../components/views/StoreView.vue'),
+    },
+    {
+      path: '/pagenotfound',
+      name: 'error',
+      component: () => import('../components/views/ErrorView.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: { name: 'error' }, // Catch-all route
     },
   ],
 })

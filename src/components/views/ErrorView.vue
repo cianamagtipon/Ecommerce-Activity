@@ -1,13 +1,15 @@
+/*BASIC DESCRIPTION: Error 404.*/
+
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
+  <div class="error">
+    <h1>Error 404</h1>
   </div>
 </template>
 
 <style>
 @media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
+  .error {
+    min-height: 80vh;
     display: flex;
     align-items: center;
   }

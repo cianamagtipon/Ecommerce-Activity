@@ -1,5 +1,7 @@
-<script setup lang="ts"></script>
-
 <template>
-  <main></main>
+  <div class="home">
+    <h1>This is our home view</h1>
+  </div>
 </template>
+
+<style scoped></style>
