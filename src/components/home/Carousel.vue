@@ -1,23 +1,25 @@
 <script setup lang="ts">
 const carouselSlides = [
   {
-    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794',
+    image: 'https://byanavrin.com/cdn/shop/articles/1A-151763.png',
     title: 'A World of Stories',
     caption: 'Books are uniquely portable magic.',
   },
   {
-    image: 'https://www.melaniejadedesign.com/wp-content/uploads/2023/08/cozy-home-12.jpg',
+    image:
+      'https://cdn11.bigcommerce.com/s-pqt7n8/images/stencil/1280x1280/products/12999/42026/robotime-diy-miniature-booknook-wonderland-bookstore2__65110.1703800064.jpg?c=2?imbypass=on',
     title: 'Quiet Moments',
     caption: 'Find peace in the pages of a good book.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66',
+    image:
+      'https://www.robotimeonline.com/cdn/shop/articles/1_394678ce-2aa3-4dd6-a479-0fe303096094.jpg',
     title: 'Shelf Goals',
     caption: 'No such thing as buying too many books.',
   },
   {
     image:
-      'https://sp-ao.shortpixel.ai/client/to_webp%2Cq_glossy%2Cret_img%2Cw_1024%2Ch_775/https%3A//sociallyrach.com/wp-content/uploads/2025/05/How-to-Create-a-Cozy-Reading-Nook-1024x775.jpg',
+      'https://magicholz.de/cdn/shop/files/GrimmsBuilding_Diorama_BookNook_MagicHolz5.png',
     title: 'Late Night Reading',
     caption: 'Sometimes the best stories unfold after midnight.',
   },
@@ -27,7 +29,7 @@ const carouselSlides = [
 <template>
   <div class="carousel-container">
     <div class="block text-center">
-      <el-carousel trigger="click" arrow="never" class="carousel">
+      <el-carousel trigger="click" class="carousel">
         <el-carousel-item v-for="(slide, index) in carouselSlides" :key="index">
           <div class="carousel-slide">
             <img :src="slide.image" :alt="slide.title" class="carousel-image" />
@@ -98,8 +100,9 @@ const carouselSlides = [
   padding-right: 2rem;
   inset: 0;
   z-index: 2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   font-size: clamp(1.5rem, 3vw, 3rem);
+  text-shadow: 0 5px 4px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
 }
 
 .carousel-text h2 {

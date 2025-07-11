@@ -3,5 +3,9 @@ import Cards from './store/Cards.vue'
 </script>
 
 <template>
-  <Cards></Cards>
+  <div clsss="store">
+    <div class="cards">
+      <Cards></Cards>
+    </div>
+  </div>
 </template>
