@@ -1,73 +1,62 @@
 <script setup lang="ts">
-import { useProductStore } from '@/stores/products'
-import { onMounted } from 'vue'
+import type { Product } from '@/types/genre'
 
-const productStore = useProductStore()
+defineProps<{
+  products: Product[]
+}>()
 
-onMounted(() => {
-  if (productStore.products.length === 0) {
-    productStore.loadMockData()
-  }
-})
-
-// function formatDate(date: Date): string {
-//   return new Date(date).toLocaleDateString('en-US', {
-//     year: 'numeric',
-//     month: 'short',
-//     day: 'numeric',
-//   })
-// }
-
-function discounted(book: (typeof productStore.products)[number]) {
+function discounted(book: Product) {
   return (book.retail * (1 - book.discount / 100)).toFixed(2)
 }
 </script>
 
 <template>
   <div class="card-container">
-    <el-card
-      v-for="book in productStore.products"
+    <router-link
+      v-for="book in products"
       :key="book.isbn"
-      class="book-card"
+      :to="{
+        name: 'product',
+        params: { genre: book.genre.toLowerCase(), id: book.isbn },
+      }"
+      class="book-link"
     >
-      <img
-        src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
-        style="width: 100%"
-      />
+      <el-card class="book-card" shadow="hover">
+        <img
+          src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
+          style="width: 100%"
+        />
 
-      <div class="card-info">
-        <div class="book-info">
-          <p>
-            <span class="title">
-              <strong>
-                {{ book.title }}
-              </strong> </span
-            ><br />
-            <span class="author">
-              {{ book.author }}
-            </span>
-          </p>
+        <div class="card-info">
+          <div class="book-info">
+            <p>
+              <span class="title"
+                ><strong>{{ book.title }}</strong></span
+              ><br />
+              <span class="author">{{ book.author }}</span>
+            </p>
+          </div>
+
+          <!-- Main Price Display -->
+          <div class="book-price">
+            <p>
+              <span v-if="book.discount > 0" class="discounted">
+                ₱{{ discounted(book) }}
+              </span>
+              <span v-else
+                ><strong>₱{{ book.retail }}</strong></span
+              ><br />
+
+              <!-- Original Price and Discount under Main Price -->
+              <span v-if="book.discount > 0" class="under-retail">
+                <del>₱{{ book.retail }}</del>
+                <span class="discount">-{{ book.discount }}%</span>
+              </span>
+            </p>
+          </div>
         </div>
-
-        <!-- Main price display -->
-        <div class="book-price">
-          <p>
-            <span v-if="book.discount > 0" class="discounted">
-              ₱{{ discounted(book) }}
-            </span>
-            <span v-else
-              ><strong>₱{{ book.retail }}</strong></span
-            ><br />
-
-            <!-- Original price and discount under the main price -->
-            <span v-if="book.discount > 0" class="under-retail">
-              <del>₱{{ book.retail }}</del>
-              <span class="discount">-{{ book.discount }}%</span>
-            </span>
-          </p>
-        </div>
-      </div>
-    </el-card>
+      </el-card>
+    </router-link>
   </div>
 </template>
 
@@ -75,7 +64,13 @@ function discounted(book: (typeof productStore.products)[number]) {
 .card-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 1rem;
+}
+
+.book-link {
+  text-decoration: none;
+  color: inherit;
+  align-self: stretch; /* added for equal height rows */
 }
 
 .book-card {
@@ -83,12 +78,13 @@ function discounted(book: (typeof productStore.products)[number]) {
   flex-direction: column;
   justify-content: space-between;
   width: 200px;
-  min-height: 260px;
+  height: 100%;
   padding: 2px;
   margin: 0 auto;
   border: 1px solid #d6c9bb;
   color: #3b2a22;
   box-shadow: 0 3px 7px rgba(93, 61, 46, 0.08);
+  box-sizing: border-box;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -96,8 +92,8 @@ function discounted(book: (typeof productStore.products)[number]) {
 
 .book-card img {
   width: 100%;
-  object-fit: cover;
   height: auto;
+  object-fit: cover;
 }
 
 .card-info {
@@ -118,7 +114,7 @@ function discounted(book: (typeof productStore.products)[number]) {
 }
 
 .author {
-  display: block; /* makes margin-top work for some reason */
+  display: block;
   color: #999;
   font-size: 13px;
   margin-top: 5px;

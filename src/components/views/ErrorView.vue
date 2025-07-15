@@ -7,11 +7,10 @@
 </template>
 
 <style>
-@media (min-width: 1024px) {
-  .error {
-    min-height: 80vh;
-    display: flex;
-    align-items: center;
-  }
+.error {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  color: #5d3d2e;
 }
 </style>

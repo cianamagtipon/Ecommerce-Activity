@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import Store from '../Store.vue'
+import Cart from '@/components/Cart.vue'
 </script>
 
 <template>
-  <div class="store">
-    <Store />
+  <div class="cart">
+    <Cart />
   </div>
 </template>
 
 <style scoped>
-.store {
+.cart {
   padding: 1rem;
 }
 </style>

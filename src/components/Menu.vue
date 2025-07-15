@@ -21,7 +21,8 @@ const handleSelect = (key: string) => {
   activeIndex.value = key
   if (key === '1-1') router.push('/home')
   else if (key === '1-2') router.push('/store')
-  else if (key === '1-3' || key === '2-1' || key === '2-2') {
+  else if (key === '1-3') router.push('/cart')
+  else if (key === '2-1' || key === '2-2') {
     console.log('Clicked:', key)
   }
   isDrawerVisible.value = false
@@ -62,6 +63,8 @@ watch(
   (newName) => {
     if (newName === 'home') activeIndex.value = '1-1'
     else if (newName === 'store') activeIndex.value = '1-2'
+    else if (newName === 'genre') activeIndex.value = '1-2'
+    else if (newName === 'cart') activeIndex.value = '1-3'
     else activeIndex.value = ''
   },
   { immediate: true },

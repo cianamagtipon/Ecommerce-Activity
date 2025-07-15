@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import Store from '../Store.vue'
+import Genre from '../Genre.vue'
 </script>
 
 <template>
-  <div class="store">
-    <Store />
+  <div class="genre">
+    <Genre />
   </div>
 </template>
 
 <style scoped>
-.store {
+.genre {
   padding: 1rem;
 }
 </style>

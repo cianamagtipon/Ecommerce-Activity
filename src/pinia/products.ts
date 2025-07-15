@@ -21,7 +21,7 @@ export const useProductStore = defineStore('product', {
       this.products = inventory.map((p) => ({
         ...p,
         genre: p.genre as Genre,
-        publishDate: new Date(p.publishDate), // converts string to Date
+        publishDate: new Date(p.publishDate),
       }))
     },
 
@@ -36,5 +36,10 @@ export const useProductStore = defineStore('product', {
     clearProducts() {
       this.products = []
     },
+  },
+
+  persist: {
+    key: 'store',
+    storage: localStorage,
   },
 })

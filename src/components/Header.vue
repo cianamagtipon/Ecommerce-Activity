@@ -63,7 +63,7 @@
 }
 
 ::v-deep(.el-divider) {
-  border-top: 1px solid rgba(93, 61, 46, 0.3); /* soft brown line with 50% opacity */
+  border-top: 1px solid rgba(93, 61, 46, 0.3);
   margin-top: 0.25rem;
   margin-bottom: 1rem;
 }
