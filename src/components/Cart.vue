@@ -52,7 +52,6 @@ function confirmRemove() {
         :data="cartStore.items"
         style="width: 100%"
         @row-click="onRowClick"
-        highlight-current-row
       >
         <el-table-column label="Title" min-width="200" prop="product.title" />
         <el-table-column label="Price" min-width="200" align="center">

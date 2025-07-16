@@ -51,19 +51,10 @@ const unlockBodyScroll = () => {
 
 watch(
   () => route.name,
-  (name) => {
-    if (name === 'login') document.body.classList.add('login-bg')
-    else document.body.classList.remove('login-bg')
-  },
-  { immediate: true },
-)
-
-watch(
-  () => route.name,
   (newName) => {
     if (newName === 'home') activeIndex.value = '1-1'
-    else if (newName === 'store') activeIndex.value = '1-2'
-    else if (newName === 'genre') activeIndex.value = '1-2'
+    else if (newName === 'store' || newName === 'genre')
+      activeIndex.value = '1-2'
     else if (newName === 'cart') activeIndex.value = '1-3'
     else activeIndex.value = ''
   },
