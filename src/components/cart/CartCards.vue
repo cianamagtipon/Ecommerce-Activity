@@ -1,11 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useCartStore } from '@/pinia/cart'
 import { ElMessageBox } from 'element-plus'
 
 const cartStore = useCartStore()
 
 const selectedISBNs = ref<Set<string>>(new Set())
+const allISBNs = computed(() =>
+  cartStore.items.map((item) => item.product.isbn),
+)
+
+const isAllSelected = computed(
+  () =>
+    allISBNs.value.length > 0 &&
+    allISBNs.value.every((isbn) => selectedISBNs.value.has(isbn)),
+)
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    // unselect all
+    selectedISBNs.value.clear()
+  } else {
+    // select all
+    selectedISBNs.value = new Set(allISBNs.value)
+  }
+}
 
 function toggleCard(isbn: string) {
   if (selectedISBNs.value.has(isbn)) {
@@ -31,15 +50,83 @@ async function confirmRemove(isbn: string) {
     // user canceled - does nothing
   }
 }
+
+async function removeSelected() {
+  try {
+    await ElMessageBox.confirm(
+      'Are you sure you want to remove all selected items from your cart?',
+      'Confirm Bulk Removal',
+      {
+        confirmButtonText: 'Remove All',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      },
+    )
+
+    selectedISBNs.value.forEach((isbn) => {
+      cartStore.removeFromCart(isbn)
+    })
+
+    selectedISBNs.value.clear()
+  } catch {
+    // canceled
+  }
+}
+
+function checkoutSelected() {
+  const selectedItems = cartStore.items.filter((item) =>
+    selectedISBNs.value.has(item.product.isbn),
+  )
+
+  console.log('Proceeding to checkout with:', selectedItems)
+}
 </script>
 
 <template>
   <div class="cart">
-    <div class="cart-header">
+    <div
+      class="cart-header"
+      :class="{ centered: cartStore.items.length === 0 }"
+    >
       <h2>Your Cart</h2>
-      <span class="total-amount">
+      <span
+        v-if="cartStore.items.length === 0"
+        class="total-amount"
+        style="display: none"
+      ></span>
+      <span v-else>
         <strong>Total:</strong> ₱{{ cartStore.totalPrice.toFixed(2) }}
       </span>
+    </div>
+
+    <div v-if="cartStore.items.length !== 0" class="select-all">
+      <div class="left-group">
+        <input
+          type="checkbox"
+          :checked="isAllSelected"
+          @change="toggleSelectAll"
+          id="select-all-checkbox"
+        />
+        <label for="select-all-checkbox">Select All</label>
+      </div>
+
+      <div class="right-group">
+        <button
+          class="bulk-action danger"
+          @click="removeSelected"
+          :disabled="selectedISBNs.size === 0"
+        >
+          Delete Selected
+        </button>
+
+        <button
+          class="bulk-action primary"
+          @click="checkoutSelected"
+          :disabled="selectedISBNs.size === 0"
+        >
+          Checkout Selected
+        </button>
+      </div>
     </div>
 
     <div v-if="cartStore.items.length === 0" class="empty-cart">
@@ -124,6 +211,15 @@ async function confirmRemove(isbn: string) {
   padding: 0 0.5rem;
 }
 
+.cart-header.centered {
+  justify-content: center;
+  text-align: center;
+}
+
+.cart-header.centered h2 {
+  flex: 1;
+}
+
 .cart-header h2 {
   margin: 0;
   font-size: 1.8rem;
@@ -133,6 +229,66 @@ async function confirmRemove(isbn: string) {
   font-size: 1.2rem;
   white-space: nowrap;
 }
+
+/* SELECT MULTIPLE CARDS */
+
+.select-all {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  margin: 1.5rem 0 1rem;
+  padding: 0 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.left-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.right-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bulk-action {
+  margin-left: 1rem;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.bulk-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bulk-action.danger {
+  background-color: #d9534f;
+  color: white;
+}
+
+.bulk-action.danger:hover:not(:disabled) {
+  background-color: #c9302c;
+}
+
+.bulk-action.primary {
+  background-color: #5d3d2e;
+  color: white;
+}
+
+.bulk-action.primary:hover:not(:disabled) {
+  background-color: #3b2a22;
+}
+
+/* CARD STYLES */
 
 .empty-cart {
   padding: 2rem;

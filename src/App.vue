@@ -2,6 +2,7 @@
 import Header from './components/Header.vue'
 import Menu from './components/Menu.vue'
 import Login from './components/auth/Login.vue'
+import Footer from './components/Footer.vue'
 
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -32,6 +33,9 @@ const route = useRoute()
     </div>
 
     <Login v-model:dialog-visible="showLogin" />
+    <!-- <div class="footer">
+      <Footer></Footer>
+    </div> -->
   </div>
 </template>
 
