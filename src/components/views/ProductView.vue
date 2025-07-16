@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Product from '../Product.vue'
+import Product from '../store/Product.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()

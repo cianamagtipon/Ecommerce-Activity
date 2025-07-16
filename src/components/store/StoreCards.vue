@@ -63,11 +63,13 @@ function discounted(book: Product) {
 <style scoped>
 .card-container {
   display: grid;
+  width: 100%;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
 
 .book-link {
+  display: flex;
   text-decoration: none;
   color: inherit;
   align-self: stretch; /* added for equal height rows */
@@ -77,7 +79,9 @@ function discounted(book: Product) {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 200px;
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
   height: 100%;
   padding: 2px;
   margin: 0 auto;
@@ -153,12 +157,6 @@ del {
 @media (max-width: 900px) {
   .card-container {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .card-container {
-    grid-template-columns: 1fr;
   }
 }
 </style>

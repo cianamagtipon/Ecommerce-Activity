@@ -1,8 +1,16 @@
 <script setup>
 import Header from './components/Header.vue'
 import Menu from './components/Menu.vue'
+import Login from './components/auth/Login.vue'
 
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+const showLogin = ref(false)
+
+function openLogin() {
+  showLogin.value = true
+}
 
 const route = useRoute()
 </script>
@@ -11,17 +19,20 @@ const route = useRoute()
   <div class="app">
     <div v-if="route.name !== 'error'">
       <div class="header">
-        <Header></Header>
+        <Header @login-clicked="openLogin" />
       </div>
 
       <div class="menu">
-        <Menu></Menu>
+        <Menu />
       </div>
     </div>
 
     <div class="main">
       <RouterView />
     </div>
+
+    <!-- Login dialog rendered independently -->
+    <Login v-model:dialog-visible="showLogin" />
   </div>
 </template>
 
@@ -38,7 +49,6 @@ const route = useRoute()
 }
 
 .main {
-  flex-grow: 1;
   display: flex;
   justify-content: center;
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Genre from '../Genre.vue'
+import Genre from '../store/Genre.vue'
 </script>
 
 <template>

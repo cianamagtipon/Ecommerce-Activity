@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useProductStore } from '@/pinia/products'
 import { onMounted } from 'vue'
-import Cards from './store/Cards.vue'
+import StoreCards from './store/StoreCards.vue'
 
 const productStore = useProductStore()
 
@@ -13,5 +13,5 @@ onMounted(() => {
 </script>
 
 <template>
-  <Cards :products="productStore.products" />
+  <StoreCards :products="productStore.products" />
 </template>

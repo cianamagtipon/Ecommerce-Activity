@@ -1,11 +1,16 @@
-<script setup></script>
+<script setup>
+const emit = defineEmits(['login-clicked'])
+</script>
+
 <template>
   <div class="header-container">
     <div class="top-header">
       <span class="logo">BOOKTALK</span>
 
       <div class="right">
-        <el-button class="login-button" round>Log in</el-button>
+        <el-button class="login-button" round @click="emit('login-clicked')"
+          >Log in</el-button
+        >
         <el-button class="signup-button" round>Sign up for free</el-button>
       </div>
     </div>

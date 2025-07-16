@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router'
 import { useProductStore } from '@/pinia/products'
 import { computed, onMounted } from 'vue'
-import Cards from './store/Cards.vue'
+import StoreCards from './StoreCards.vue'
 import type { Genre } from '@/types/genre'
 
 const route = useRoute()
@@ -27,5 +27,5 @@ onMounted(() => {
 
 <template>
   <h2>{{ genre }} books</h2>
-  <Cards :products="filteredProducts" />
+  <StoreCards :products="filteredProducts" />
 </template>
