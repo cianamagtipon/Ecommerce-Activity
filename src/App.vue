@@ -19,11 +19,11 @@ const route = useRoute()
   <div class="app">
     <div v-if="route.name !== 'error'">
       <div class="header">
-        <Header @login-clicked="openLogin" />
+        <Header @login-clicked="openLogin"></Header>
       </div>
 
       <div class="menu">
-        <Menu />
+        <Menu></Menu>
       </div>
     </div>
 
@@ -31,7 +31,6 @@ const route = useRoute()
       <RouterView />
     </div>
 
-    <!-- Login dialog rendered independently -->
     <Login v-model:dialog-visible="showLogin" />
   </div>
 </template>

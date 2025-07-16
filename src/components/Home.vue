@@ -5,3 +5,5 @@ import Carousel from './home/Carousel.vue'
 <template>
   <Carousel></Carousel>
 </template>
+
+<style scoped></style>

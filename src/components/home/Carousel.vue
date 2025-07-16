@@ -50,43 +50,43 @@ const carouselSlides = [
   display: flex;
   justify-content: center;
   align-items: center;
-  /* width: 95%;
-  border-radius: 20px; */
-  margin: 0 auto;
-  background-color: #f5f2ee;
-  overflow: hidden;
+  border-radius: 16px;
+  margin: 0.5rem auto;
+  box-shadow: 0 8px 16px rgba(93, 61, 46, 0.5);
 }
 
 .carousel {
-  width: 100vw;
+  width: 98vw;
+  height: 50vh;
   max-width: 1440px;
   overflow: hidden;
-  /* border-radius: 16px; */
+  border-radius: 16px;
   transition: ease;
 }
 
 .el-carousel__item,
 .carousel-image {
   width: 100%;
-  height: 100%;
+  height: 50vh;
   object-fit: cover;
 }
 
 .carousel-slide {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 50vh;
 }
 
 .carousel-image {
   width: 100%;
-  height: 100%;
+  height: 50vh;
   /* filter: blur(3px); */
   object-fit: cover;
   display: block;
 }
 
 .carousel-text {
+  height: 50vh;
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -100,7 +100,7 @@ const carouselSlides = [
   padding-right: 2rem;
   inset: 0;
   z-index: 2;
-  font-size: clamp(1.5rem, 3vw, 3rem);
+  font-size: clamp(1.2rem, 4vw, 2.5rem);
   text-shadow: 0 5px 4px rgba(0, 0, 0, 0.6);
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
 }
@@ -125,9 +125,78 @@ const carouselSlides = [
   pointer-events: none;
 }
 
+@media (min-width: 1000px) and (max-height: 700px) {
+  .carousel {
+    width: 95vw;
+  }
+
+  .el-carousel__item,
+  .carousel-image {
+    height: 50vh;
+  }
+
+  .carousel-text {
+    height: 30vh;
+  }
+}
+
 @media (min-width: 1440px) {
   .carousel-container {
     width: 100%;
+  }
+
+  .carousel {
+    width: 95vw;
+    height: 35vh;
+  }
+
+  .el-carousel__item,
+  .carousel-image {
+    height: 50vh;
+  }
+
+  .carousel-text {
+    height: 35vh;
+  }
+}
+
+@media (max-width: 900px) {
+  .carousel-container {
+    margin: 1rem auto;
+  }
+
+  .carousel {
+    width: 95vw;
+    height: 40vh;
+  }
+
+  .el-carousel__item,
+  .carousel-image {
+    height: 40vh;
+  }
+
+  .carousel-text {
+    height: 35vh;
+  }
+}
+
+@media (max-width: 600px) {
+  .carousel-container {
+    margin: 1rem auto;
+  }
+
+  .carousel {
+    width: 90vw;
+    height: 30vh;
+  }
+
+  .el-carousel__item,
+  .carousel-image {
+    height: 30vh;
+  }
+
+  .carousel-text {
+    height: 15vh;
   }
 }
 </style>
