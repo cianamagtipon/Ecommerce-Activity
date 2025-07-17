@@ -4,27 +4,16 @@ import { useCartStore } from '@/pinia/cart'
 import { ElMessageBox } from 'element-plus'
 
 const cartStore = useCartStore()
+const selectedISBNs = computed(() => cartStore.selectedISBNs)
 
-const selectedISBNs = ref<Set<string>>(new Set())
-const allISBNs = computed(() =>
-  cartStore.items.map((item) => item.product.isbn),
-)
+const currentPage = ref(1)
+const pageSize = ref(6) // customize per page
 
-const isAllSelected = computed(
-  () =>
-    allISBNs.value.length > 0 &&
-    allISBNs.value.every((isbn) => selectedISBNs.value.has(isbn)),
-)
-
-function toggleSelectAll() {
-  if (isAllSelected.value) {
-    // unselect all
-    selectedISBNs.value.clear()
-  } else {
-    // select all
-    selectedISBNs.value = new Set(allISBNs.value)
-  }
-}
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return cartStore.items.slice(start, end)
+})
 
 function toggleCard(isbn: string) {
   if (selectedISBNs.value.has(isbn)) {
@@ -47,95 +36,22 @@ async function confirmRemove(isbn: string) {
     )
     cartStore.removeFromCart(isbn)
   } catch {
-    // user canceled - does nothing
+    // User canceled
   }
-}
-
-async function removeSelected() {
-  try {
-    await ElMessageBox.confirm(
-      'Are you sure you want to remove all selected items from your cart?',
-      'Confirm Bulk Removal',
-      {
-        confirmButtonText: 'Remove All',
-        cancelButtonText: 'Cancel',
-        type: 'warning',
-      },
-    )
-
-    selectedISBNs.value.forEach((isbn) => {
-      cartStore.removeFromCart(isbn)
-    })
-
-    selectedISBNs.value.clear()
-  } catch {
-    // canceled
-  }
-}
-
-function checkoutSelected() {
-  const selectedItems = cartStore.items.filter((item) =>
-    selectedISBNs.value.has(item.product.isbn),
-  )
-
-  console.log('Proceeding to checkout with:', selectedItems)
 }
 </script>
 
 <template>
-  <div class="cart">
-    <div
-      class="cart-header"
-      :class="{ centered: cartStore.items.length === 0 }"
-    >
-      <h2>Your Cart</h2>
-      <span
-        v-if="cartStore.items.length === 0"
-        class="total-amount"
-        style="display: none"
-      ></span>
-      <span v-else>
-        <strong>Total:</strong> ₱{{ cartStore.totalPrice.toFixed(2) }}
-      </span>
-    </div>
-
-    <div v-if="cartStore.items.length !== 0" class="select-all">
-      <div class="left-group">
-        <input
-          type="checkbox"
-          :checked="isAllSelected"
-          @change="toggleSelectAll"
-          id="select-all-checkbox"
-        />
-        <label for="select-all-checkbox">Select All</label>
-      </div>
-
-      <div class="right-group">
-        <button
-          class="bulk-action danger"
-          @click="removeSelected"
-          :disabled="selectedISBNs.size === 0"
-        >
-          Delete Selected
-        </button>
-
-        <button
-          class="bulk-action primary"
-          @click="checkoutSelected"
-          :disabled="selectedISBNs.size === 0"
-        >
-          Checkout Selected
-        </button>
-      </div>
-    </div>
-
+  <div class="cart-cards">
     <div v-if="cartStore.items.length === 0" class="empty-cart">
-      <p>Your cart is empty.</p>
+      <el-empty description="Your cart is empty">
+        <el-button type="primary">Check our store!</el-button>
+      </el-empty>
     </div>
 
     <div v-else class="cart-list">
       <div
-        v-for="item in cartStore.items"
+        v-for="item in paginatedItems"
         :key="item.product.isbn"
         class="cart-card"
         :class="{ selected: selectedISBNs.has(item.product.isbn) }"
@@ -185,6 +101,13 @@ function checkoutSelected() {
               :max="99"
               size="small"
               @click.stop
+              @blur="
+                () => {
+                  if (!item.quantity || item.quantity < 1) {
+                    item.quantity = 1
+                  }
+                }
+              "
               @change="
                 () => cartStore.updateQuantity(item.product.isbn, item.quantity)
               "
@@ -193,99 +116,30 @@ function checkoutSelected() {
         </div>
       </div>
     </div>
+
+    <el-pagination
+      v-if="cartStore.items.length > pageSize"
+      v-model:current-page="currentPage"
+      :page-size="pageSize"
+      :total="cartStore.items.length"
+      layout="prev, pager, next"
+      class="pagination-bar"
+    />
   </div>
 </template>
 
 <style scoped>
-.cart {
+.cart-cards {
   width: 100%;
   padding: 1rem;
   box-sizing: border-box;
 }
 
-.cart-header {
+.pagination-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin: 0 auto;
-  padding: 0 0.5rem;
-}
-
-.cart-header.centered {
+  align-items: center;
   justify-content: center;
-  text-align: center;
-}
-
-.cart-header.centered h2 {
-  flex: 1;
-}
-
-.cart-header h2 {
-  margin: 0;
-  font-size: 1.8rem;
-}
-
-.total-amount {
-  font-size: 1.2rem;
-  white-space: nowrap;
-}
-
-/* SELECT MULTIPLE CARDS */
-
-.select-all {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 500;
-  margin: 1.5rem 0 1rem;
-  padding: 0 1rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.left-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.right-group {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.bulk-action {
-  margin-left: 1rem;
-  padding: 6px 12px;
-  font-size: 0.9rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.bulk-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.bulk-action.danger {
-  background-color: #d9534f;
-  color: white;
-}
-
-.bulk-action.danger:hover:not(:disabled) {
-  background-color: #c9302c;
-}
-
-.bulk-action.primary {
-  background-color: #5d3d2e;
-  color: white;
-}
-
-.bulk-action.primary:hover:not(:disabled) {
-  background-color: #3b2a22;
+  margin-top: 1rem;
 }
 
 /* CARD STYLES */
@@ -298,13 +152,11 @@ function checkoutSelected() {
 
 .cart-list {
   display: grid;
-  gap: 1rem;
-  margin: 1rem auto 0;
   width: 100%;
   max-width: 900px;
-  padding: 1rem;
+  gap: 1rem;
   box-sizing: border-box;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); */
 }
 
 .cart-card {
@@ -316,7 +168,8 @@ function checkoutSelected() {
   align-self: stretch;
   box-sizing: border-box;
   gap: 1rem;
-  padding: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1rem;
   border: 1px solid #d6c9bb;
   color: #3b2a22;
   box-shadow: 0 3px 7px rgba(93, 61, 46, 0.08);
@@ -417,7 +270,7 @@ del {
   font-size: 14px;
 }
 
-@media (max-width: 1200px) {
+/* @media (max-width: 1200px) {
   .cart-list {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -426,6 +279,12 @@ del {
 @media (max-width: 900px) {
   .cart-list {
     grid-template-columns: 1fr;
+  }
+} */
+
+@media (max-width: 815px) {
+  .cart-card {
+    padding: 1rem;
   }
 }
 </style>

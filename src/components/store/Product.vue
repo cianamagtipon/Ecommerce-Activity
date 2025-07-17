@@ -80,6 +80,13 @@ watch(product, (newProduct) => {
           :max="99"
           size="small"
           @click.stop
+          @blur="
+            () => {
+              if (!quantity || quantity < 1) {
+                quantity = 1
+              }
+            }
+          "
         />
       </div>
 

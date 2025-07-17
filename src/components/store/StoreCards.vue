@@ -81,7 +81,6 @@ function discounted(book: Product) {
   justify-content: space-between;
   width: 100%;
   max-width: 200px;
-  margin: 0 auto;
   height: 100%;
   padding: 2px;
   margin: 0 auto;

@@ -4,6 +4,7 @@ import type { Product } from '@/types/genre'
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [] as { product: Product; quantity: number }[],
+    selectedISBNs: new Set<string>(),
   }),
 
   getters: {
@@ -19,6 +20,10 @@ export const useCartStore = defineStore('cart', {
             item.quantity,
         0,
       ),
+
+    isAllSelected: (state) =>
+      state.items.length > 0 &&
+      state.items.every((item) => state.selectedISBNs.has(item.product.isbn)),
   },
 
   actions: {
@@ -35,6 +40,9 @@ export const useCartStore = defineStore('cart', {
 
     removeFromCart(isbn: string) {
       this.items = this.items.filter((item) => item.product.isbn !== isbn)
+      this.selectedISBNs = new Set(
+        [...this.selectedISBNs].filter((id) => id !== isbn),
+      )
     },
 
     updateQuantity(isbn: string, quantity: number) {
@@ -44,11 +52,38 @@ export const useCartStore = defineStore('cart', {
 
     clearCart() {
       this.items = []
+      this.selectedISBNs.clear()
+    },
+
+    toggleSelectAll() {
+      const allSelected = this.items.every((item) =>
+        this.selectedISBNs.has(item.product.isbn),
+      )
+
+      if (allSelected) {
+        this.selectedISBNs = new Set()
+      } else {
+        this.selectedISBNs = new Set(
+          this.items.map((item) => item.product.isbn),
+        )
+      }
     },
   },
 
   persist: {
-    key: 'cart', // storage key name
-    storage: localStorage, // or sessionStorage
+    key: 'cart',
+    storage: localStorage,
+    serializer: {
+      serialize: (value) =>
+        JSON.stringify({
+          ...value,
+          selectedISBNs: Array.from(value.selectedISBNs),
+        }),
+      deserialize: (value) => {
+        const parsed = JSON.parse(value)
+        parsed.selectedISBNs = new Set(parsed.selectedISBNs)
+        return parsed
+      },
+    },
   },
 })
