@@ -7,7 +7,7 @@ const cartStore = useCartStore()
 const selectedISBNs = computed(() => cartStore.selectedISBNs)
 
 const currentPage = ref(1)
-const pageSize = ref(6) // customize per page
+const pageSize = ref(3) // customize per page
 
 const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -42,81 +42,83 @@ async function confirmRemove(isbn: string) {
 </script>
 
 <template>
-  <div class="cart-cards">
-    <div v-if="cartStore.items.length === 0" class="empty-cart">
-      <el-empty description="Your cart is empty">
-        <el-button type="primary">Check our store!</el-button>
-      </el-empty>
-    </div>
+  <div class="cart-container">
+    <div class="cart-cards">
+      <div v-if="cartStore.items.length === 0" class="empty-cart">
+        <el-empty description="Your cart is empty">
+          <el-button type="primary">Check our store!</el-button>
+        </el-empty>
+      </div>
 
-    <div v-else class="cart-list">
-      <div
-        v-for="item in paginatedItems"
-        :key="item.product.isbn"
-        class="cart-card"
-        :class="{ selected: selectedISBNs.has(item.product.isbn) }"
-        @click="toggleCard(item.product.isbn)"
-      >
-        <img
-          class="product-image"
-          src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
-        />
+      <div v-else class="cart-list">
+        <div
+          v-for="item in paginatedItems"
+          :key="item.product.isbn"
+          class="cart-card"
+          :class="{ selected: selectedISBNs.has(item.product.isbn) }"
+          @click="toggleCard(item.product.isbn)"
+        >
+          <img
+            class="product-image"
+            src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
+          />
 
-        <div class="product-details">
-          <button
-            class="remove-btn"
-            @click.stop="confirmRemove(item.product.isbn)"
-            aria-label="Remove item"
-          >
-            ×
-          </button>
+          <div class="product-details">
+            <button
+              class="remove-btn"
+              @click.stop="confirmRemove(item.product.isbn)"
+              aria-label="Remove item"
+            >
+              ×
+            </button>
 
-          <h3>{{ item.product.title }}</h3>
-          <!-- Main Price Display -->
-          <p>
-            <span v-if="item.product.discount > 0" class="discounted">
-              ₱{{
-                (
-                  item.product.retail *
-                  (1 - item.product.discount / 100)
-                ).toFixed(2)
-              }}
-            </span>
-            <span v-else
-              ><strong>₱{{ item.product.retail.toFixed(2) }}</strong></span
-            ><br />
+            <h3>{{ item.product.title }}</h3>
+            <!-- Main Price Display -->
+            <p>
+              <span v-if="item.product.discount > 0" class="discounted">
+                ₱{{
+                  (
+                    item.product.retail *
+                    (1 - item.product.discount / 100)
+                  ).toFixed(2)
+                }}
+              </span>
+              <span v-else
+                ><strong>₱{{ item.product.retail.toFixed(2) }}</strong></span
+              ><br />
 
-            <!-- Original Price and Discount under Main Price -->
-            <span v-if="item.product.discount > 0" class="under-retail">
-              <del>₱{{ item.product.retail.toFixed(2) }}</del>
-              <span class="discount"> -{{ item.product.discount }}%</span>
-            </span>
-          </p>
+              <!-- Original Price and Discount under Main Price -->
+              <span v-if="item.product.discount > 0" class="under-retail">
+                <del>₱{{ item.product.retail.toFixed(2) }}</del>
+                <span class="discount"> -{{ item.product.discount }}%</span>
+              </span>
+            </p>
 
-          <div class="quantity-control">
-            <label>Quantity:</label>
-            <el-input-number
-              v-model="item.quantity"
-              :min="1"
-              :max="99"
-              size="small"
-              @click.stop
-              @blur="
-                () => {
-                  if (!item.quantity || item.quantity < 1) {
-                    item.quantity = 1
+            <div class="quantity-control">
+              <label>Quantity:</label>
+              <el-input-number
+                v-model="item.quantity"
+                :min="1"
+                :max="99"
+                size="small"
+                @click.stop
+                @blur="
+                  () => {
+                    if (!item.quantity || item.quantity < 1) {
+                      item.quantity = 1
+                    }
                   }
-                }
-              "
-              @change="
-                () => cartStore.updateQuantity(item.product.isbn, item.quantity)
-              "
-            />
+                "
+                @change="
+                  () =>
+                    cartStore.updateQuantity(item.product.isbn, item.quantity)
+                "
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
-
     <el-pagination
       v-if="cartStore.items.length > pageSize"
       v-model:current-page="currentPage"
@@ -129,10 +131,18 @@ async function confirmRemove(isbn: string) {
 </template>
 
 <style scoped>
+.cart-container {
+  margin-bottom: 1rem;
+}
 .cart-cards {
   width: 100%;
   padding: 1rem;
   box-sizing: border-box;
+  height: 560px;
+  /* border: 1px solid #d6c9bb;
+  color: #3b2a22;
+  box-shadow: 0 3px 7px rgba(93, 61, 46, 0.08);
+  border-radius: 5px; */
 }
 
 .pagination-bar {
@@ -153,7 +163,6 @@ async function confirmRemove(isbn: string) {
 .cart-list {
   display: grid;
   width: 100%;
-  max-width: 900px;
   gap: 1rem;
   box-sizing: border-box;
   /* grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); */
@@ -168,7 +177,6 @@ async function confirmRemove(isbn: string) {
   align-self: stretch;
   box-sizing: border-box;
   gap: 1rem;
-  padding-bottom: 1rem;
   padding-left: 1rem;
   border: 1px solid #d6c9bb;
   color: #3b2a22;
@@ -221,8 +229,7 @@ async function confirmRemove(isbn: string) {
   flex-direction: column;
   flex: 1;
   margin-top: 0.5rem;
-
-  gap: 0.4rem;
+  margin-right: 1rem;
 }
 
 .product-details h3 {
@@ -237,7 +244,10 @@ async function confirmRemove(isbn: string) {
 .quantity-control {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
 }
 
 .total {
@@ -282,7 +292,7 @@ del {
   }
 } */
 
-@media (max-width: 815px) {
+@media (max-width: 915px) {
   .cart-card {
     padding: 1rem;
   }

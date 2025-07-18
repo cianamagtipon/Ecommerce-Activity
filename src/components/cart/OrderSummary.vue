@@ -96,7 +96,7 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
 }
 
 .table-container {
-  max-height: 345px;
+  max-height: 250px;
   overflow-y: auto;
   margin-bottom: 1rem;
 }

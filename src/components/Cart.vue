@@ -95,7 +95,7 @@ function checkoutSelected() {
   display: grid;
   grid-template-columns: 2fr 1fr;
   grid-template-rows: auto 1fr;
-  gap: 8px;
+  gap: 20px;
 }
 
 .cart-header {
