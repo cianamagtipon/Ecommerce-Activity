@@ -160,6 +160,21 @@ const carouselSlides = [
   }
 }
 
+@media (max-height: 899px) {
+  .carousel {
+    height: 50vh;
+  }
+
+  .carousel-image,
+  .carousel-slide {
+    height: 50vh;
+  }
+
+  .carousel-text {
+    height: 45vh;
+  }
+}
+
 @media (max-width: 900px) {
   .carousel-container {
     margin: 1rem auto;

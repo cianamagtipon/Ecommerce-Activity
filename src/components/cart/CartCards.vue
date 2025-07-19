@@ -134,6 +134,7 @@ async function confirmRemove(isbn: string) {
 .cart-container {
   margin-bottom: 1rem;
 }
+
 .cart-cards {
   width: 100%;
   padding: 1rem;
@@ -229,7 +230,7 @@ async function confirmRemove(isbn: string) {
   flex-direction: column;
   flex: 1;
   margin-top: 0.5rem;
-  margin-right: 1rem;
+  margin-right: 2rem;
 }
 
 .product-details h3 {
@@ -291,10 +292,4 @@ del {
     grid-template-columns: 1fr;
   }
 } */
-
-@media (max-width: 915px) {
-  .cart-card {
-    padding: 1rem;
-  }
-}
 </style>
