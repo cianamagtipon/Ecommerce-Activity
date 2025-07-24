@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useCartStore } from '@/pinia/cart'
+import { ElMessageBox } from 'element-plus'
+
 import CartHeader from './cart/CartHeader.vue'
 import CartCards from './cart/CartCards.vue'
 import CartActions from './cart/CartActions.vue'
-import OrderSummary from './cart/OrderSummary.vue'
-import { ElMessageBox } from 'element-plus'
+import OrderSummary from './OrderSummary.vue'
+
+const router = useRouter()
 
 const cartStore = useCartStore()
 const { selectedISBNs } = storeToRefs(cartStore)
@@ -53,7 +57,9 @@ function checkoutSelected() {
   const selectedItems = cartStore.items.filter((item) =>
     selectedISBNs.value.has(item.product.isbn),
   )
+
   console.log('Proceeding to checkout with:', selectedItems)
+  router.push('/checkout')
 }
 </script>
 
@@ -67,7 +73,6 @@ function checkoutSelected() {
         :selectedISBNs="selectedISBNs"
         @toggleSelectAll="toggleSelectAll"
         @removeSelected="removeSelected"
-        @checkoutSelected="checkoutSelected"
       />
     </div>
 
@@ -85,6 +90,7 @@ function checkoutSelected() {
         :selectedItems="
           cartStore.items.filter((item) => selectedISBNs.has(item.product.isbn))
         "
+        @button-click="checkoutSelected"
       />
     </div>
   </div>
@@ -119,5 +125,24 @@ function checkoutSelected() {
   grid-row: 2;
   padding-top: 1rem;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .cart {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cart-header,
+  .cart-view,
+  .order-summary {
+    grid-column: unset;
+    grid-row: unset;
+    width: 100%;
+  }
+
+  .order-summary {
+    order: 3;
+  }
 }
 </style>

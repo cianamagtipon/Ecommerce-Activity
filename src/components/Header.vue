@@ -1,5 +1,11 @@
-<script setup>
-const emit = defineEmits(['login-clicked'])
+<script setup lang="ts">
+import { useUserStore } from '@/pinia/user'
+import { storeToRefs } from 'pinia'
+
+const userStore = useUserStore()
+const { isLoggedIn } = storeToRefs(userStore)
+
+const emit = defineEmits(['login-clicked', 'logout-clicked', 'signup-clicked'])
 </script>
 
 <template>
@@ -8,10 +14,33 @@ const emit = defineEmits(['login-clicked'])
       <span class="logo">BOOKTALK</span>
 
       <div class="right">
-        <el-button class="login-button" round @click="emit('login-clicked')"
-          >Log in</el-button
+        <el-button
+          v-if="!isLoggedIn"
+          class="login-button"
+          round
+          @click="emit('login-clicked')"
         >
-        <el-button class="signup-button" round>Sign up for free</el-button>
+          Log in
+        </el-button>
+
+        <el-button
+          v-if="!isLoggedIn"
+          class="signup-button"
+          round
+          @click="emit('signup-clicked')"
+        >
+          Sign up for free
+        </el-button>
+
+        <el-button
+          v-else
+          class="logout-button"
+          round
+          type="danger"
+          @click="emit('logout-clicked')"
+        >
+          Log out
+        </el-button>
       </div>
     </div>
 
@@ -61,6 +90,12 @@ const emit = defineEmits(['login-clicked'])
 .login-button {
   border-color: #5d3d2e;
   color: #5d3d2e;
+}
+
+.logout-button {
+  background-color: #5d3d2e;
+  color: white;
+  border: none;
 }
 
 .tagline {

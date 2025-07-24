@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Product } from '@/types/genre'
+import type { Product } from '@/types/product'
 
 const props = defineProps<{
   selectedItems: { product: Product; quantity: number }[]
+  buttonLabel?: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'button-click'): void
 }>()
 
 const orderTotal = computed(() =>
@@ -73,7 +78,9 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
       <h3>
         Order Total: <span class="total"> ₱{{ orderTotal.toFixed(2) }}</span>
       </h3>
-      <el-button class="checkout-button">Checkout</el-button>
+      <el-button class="checkout-button" @click="$emit('button-click')">
+        {{ buttonLabel || 'Checkout' }}
+      </el-button>
     </div>
     <!-- </template> -->
   </el-card>

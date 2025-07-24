@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/components/views/HomeView.vue'
+import Profile from '@/components/Profile.vue'
 import StoreView from '../components/views/StoreView.vue'
 import ProductView from '@/components/views/ProductView.vue'
 import CartView from '@/components/views/CartView.vue'
+import CheckoutView from '@/components/views/CheckoutView.vue'
 import ErrorView from '../components/views/ErrorView.vue'
 import GenreView from '@/components/views/GenreView.vue'
 
@@ -17,6 +19,12 @@ const router = createRouter({
     {
       path: '/home',
       redirect: '/',
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      component: Profile,
+      meta: { requiresAuth: true },
     },
     {
       path: '/store',
@@ -38,6 +46,11 @@ const router = createRouter({
       path: '/cart',
       name: 'cart',
       component: CartView,
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: CheckoutView,
     },
     {
       path: '/pagenotfound',

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Product, Genre } from '@/types/genre'
+import type { Product, Genre } from '@/types/product'
 import { inventory } from '@/assets/data/inventory'
 
 export const useProductStore = defineStore('product', {
