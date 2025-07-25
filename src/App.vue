@@ -5,9 +5,18 @@ import Login from './components/auth/Login.vue'
 import Register from './components/auth/Register.vue'
 import Footer from './components/Footer.vue'
 
-import { ref } from 'vue'
+import { ref, onBeforeMount, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
+import { useCartStore } from '@/pinia/cart'
+import { storeToRefs } from 'pinia'
+
+const userStore = useUserStore()
+const cartStore = useCartStore()
+
+const { isLoggedIn, name } = storeToRefs(userStore)
+const loginJustSucceeded = ref(false)
+const registerJustSucceeded = ref(false)
 
 const showLogin = ref(false)
 const showRegister = ref(false)
@@ -20,13 +29,27 @@ function openRegister() {
   showRegister.value = true
 }
 
-const userStore = useUserStore()
+function handleDialogClosed(flag: 'login' | 'register') {
+  const successRef =
+    flag === 'login' ? loginJustSucceeded : registerJustSucceeded
+  if (successRef.value) {
+    userStore.loadUserFromStorage()
+    cartStore.loadCartFromStorage()
+    successRef.value = false
+  }
+}
 
 function handleLogout() {
   userStore.logout()
+  window.location.reload()
 }
 
 const route = useRoute()
+
+onBeforeMount(() => {
+  userStore.loadUserFromStorage()
+  cartStore.loadCartFromStorage()
+})
 </script>
 
 <template>
@@ -49,8 +72,17 @@ const route = useRoute()
       <RouterView />
     </div>
 
-    <Login v-model:dialog-visible="showLogin" />
-    <Register v-model:dialog-visible="showRegister" />
+    <Login
+      v-model:dialog-visible="showLogin"
+      @login-success="loginJustSucceeded = true"
+      @closed="() => handleDialogClosed('login')"
+    />
+
+    <Register
+      v-model:dialog-visible="showRegister"
+      @register-success="registerJustSucceeded = true"
+      @closed="() => handleDialogClosed('register')"
+    />
   </div>
 </template>
 

@@ -15,6 +15,8 @@ const cartStore = useCartStore()
 const isEditingPhone = ref(false)
 const isEditingAddress = ref(false)
 
+const formRef = ref<FormInstance>()
+
 const editableForm = ref({
   name: userStore.name,
   email: userStore.email,
@@ -22,8 +24,6 @@ const editableForm = ref({
   address: userStore.address,
   notes: '',
 })
-
-const formRef = ref<FormInstance | null>(null)
 
 const rules = {
   name: [{ required: true, message: 'Name is required', trigger: 'blur' }],
@@ -46,13 +46,15 @@ function placeOrder() {
       return
     }
 
-    // Save to user store
-    userStore.name = editableForm.value.name
-    userStore.email = editableForm.value.email
-    userStore.phone = editableForm.value.phone
-    userStore.address = editableForm.value.address
+    // save to user store
+    userStore.updateUserData({
+      name: editableForm.value.name,
+      email: editableForm.value.email,
+      phone: editableForm.value.phone,
+      address: editableForm.value.address,
+    })
 
-    // Proceed with order logic
+    // proceed with order logic
     console.log('Placing order with:', {
       user: editableForm.value,
       items: selectedItems.value,
@@ -63,14 +65,14 @@ function placeOrder() {
 
 function togglePhoneEdit() {
   if (isEditingPhone.value) {
-    userStore.phone = editableForm.value.phone
+    userStore.updateUserData({ phone: editableForm.value.phone })
   }
   isEditingPhone.value = !isEditingPhone.value
 }
 
 function toggleAddressEdit() {
   if (isEditingAddress.value) {
-    userStore.address = editableForm.value.address
+    userStore.updateUserData({ address: editableForm.value.address })
   }
   isEditingAddress.value = !isEditingAddress.value
 }
@@ -92,14 +94,15 @@ function toggleAddressEdit() {
       >
         <div class="form-section">
           <h3>Personal Information</h3>
-          <el-form-item>
+
+          <el-form-item prop="name">
             <template #label>
               <span class="form-label">Name</span>
             </template>
             <div class="readonly-text">{{ editableForm.name || 'N/A' }}</div>
           </el-form-item>
 
-          <el-form-item>
+          <el-form-item prop="email">
             <template #label>
               <span class="form-label">Email</span>
             </template>
@@ -150,7 +153,6 @@ function toggleAddressEdit() {
                 <span>
                   Address<span style="color: #d52128; margin-left: 5px">*</span>
                 </span>
-
                 <div class="edit-icon" @click="toggleAddressEdit">
                   <el-icon
                     :style="{
@@ -175,7 +177,6 @@ function toggleAddressEdit() {
                 {{ editableForm.address || 'N/A' }}
               </div>
             </template>
-
             <template v-else>
               <el-input
                 v-model="editableForm.address"
@@ -217,9 +218,9 @@ function toggleAddressEdit() {
 .checkout {
   display: grid;
   width: 80%;
-  grid-template-columns: 1.3fr 1fr; /* for record keeping: was 2fr 1fr */
-  gap: 30px; /* for record keeping: was 50px */
-  padding: 1.5rem; /* for record keeping: was 2rem */
+  grid-template-columns: 1.3fr 1fr;
+  gap: 30px;
+  padding: 1.5rem;
 }
 
 .checkout-header {
@@ -245,8 +246,8 @@ function toggleAddressEdit() {
   font-size: 14px;
   padding: 4px 0;
   width: 100%;
-  min-height: 3em; /* match with textarea */
-  white-space: pre-wrap; /* if you want multiline display */
+  min-height: 3em;
+  white-space: pre-wrap;
 }
 
 .form-section {
@@ -288,7 +289,7 @@ function toggleAddressEdit() {
 
 .full-width-address ::v-deep(.el-textarea__inner) {
   width: 100%;
-  min-height: 3em; /* match readonly-text block */
+  min-height: 3em;
   font-size: 14px;
   color: #bba68b;
 }

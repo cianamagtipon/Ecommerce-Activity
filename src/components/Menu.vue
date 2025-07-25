@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeMount } from 'vue'
+
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, Search } from '@element-plus/icons-vue'
 import { TagIcon, ShoppingCartIcon } from '@heroicons/vue/24/solid'
 import { Bars3Icon } from '@heroicons/vue/24/outline'
 import { useScreenSize } from '@/composables/screenSize'
 
-// Dummy fullscreen loading
 const fullscreenLoading = ref(false)
 
 const route = useRoute()
@@ -53,7 +53,7 @@ const unlockBodyScroll = () => {
 
 const syncActiveIndex = () => {
   const path = route.path.replace(/\/+$/, '') // remove trailing slash
-  if (path === '' || path === '/' || path === '/home') activeIndex.value = '1-1'
+  if (path === '/home') activeIndex.value = '1-1'
   else if (path.startsWith('/store') || path.startsWith('/genre'))
     activeIndex.value = '1-2'
   else if (path.startsWith('/profile')) activeIndex.value = '1-3'

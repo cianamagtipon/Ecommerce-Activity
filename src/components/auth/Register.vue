@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUserListStore } from '@/pinia/userlist'
 import { useUserStore } from '@/pinia/user'
 
-const userListStore = useUserListStore()
 const userStore = useUserStore()
 
 const props = defineProps<{ dialogVisible: boolean }>()
@@ -60,17 +58,19 @@ async function handleRegister() {
 
   loading.value = true
   try {
-    // Call register on userlist store
-    userListStore.register({
-      name: form.value.name,
-      email: form.value.email,
+    const success = userStore.register({
+      name: form.value.name.trim(),
+      email: form.value.email.trim(),
       password: form.value.password,
-      phone: form.value.phone || undefined,
-      address: form.value.address || undefined,
+      phone: form.value.phone.trim(),
+      address: form.value.address.trim(),
+      userOrders: [],
     })
 
-    // Sync user session store with newly registered user
-    userStore.syncWithUserList()
+    if (!success) {
+      ElMessage.error('Account already exists.')
+      return
+    }
 
     ElMessage.success('Registration successful!')
     localVisible.value = false

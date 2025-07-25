@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { useProductStore } from '@/pinia/products'
 import { computed, onMounted } from 'vue'
 import StoreCards from './StoreCards.vue'
-import type { Genre } from '@/types/genre'
+import type { Genre } from '@/types/product'
 
 const route = useRoute()
 const productStore = useProductStore()

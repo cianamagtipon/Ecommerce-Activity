@@ -37,23 +37,25 @@ export const useCartStore = defineStore('cart', {
       } else {
         this.items.push({ product, quantity })
       }
+      this.saveCartToStorage()
     },
 
     removeFromCart(isbn: string) {
       this.items = this.items.filter((item) => item.product.isbn !== isbn)
-      this.selectedISBNs = new Set(
-        [...this.selectedISBNs].filter((id) => id !== isbn),
-      )
+      this.selectedISBNs.delete(isbn)
+      this.saveCartToStorage()
     },
 
     updateQuantity(isbn: string, quantity: number) {
       const item = this.items.find((item) => item.product.isbn === isbn)
       if (item) item.quantity = quantity
+      this.saveCartToStorage()
     },
 
     clearCart() {
       this.items = []
       this.selectedISBNs.clear()
+      this.saveCartToStorage()
     },
 
     toggleSelectAll() {
@@ -62,7 +64,7 @@ export const useCartStore = defineStore('cart', {
       )
 
       if (allSelected) {
-        this.selectedISBNs = new Set()
+        this.selectedISBNs.clear()
       } else {
         this.selectedISBNs = new Set(
           this.items.map((item) => item.product.isbn),
@@ -84,33 +86,31 @@ export const useCartStore = defineStore('cart', {
     clearSelected() {
       this.selectedISBNs.clear()
     },
-  },
 
-  persist: {
-    key: 'cart',
-    storage: localStorage,
-    serializer: {
-      serialize: (value) => {
-        const userStore = useUserStore()
-        const userKey = `cart-${userStore.email || 'guest'}`
-        localStorage.setItem(
-          userKey,
-          JSON.stringify({
-            ...value,
-            selectedISBNs: Array.from(value.selectedISBNs),
-          }),
-        )
-        return '' // just to satisfy pinia lol
-      },
-      deserialize: (_value) => {
-        const userStore = useUserStore()
-        const userKey = `cart-${userStore.email || 'guest'}`
-        const saved = localStorage.getItem(userKey)
-        if (!saved) return { items: [], selectedISBNs: new Set() }
-        const parsed = JSON.parse(saved)
-        parsed.selectedISBNs = new Set(parsed.selectedISBNs)
-        return parsed
-      },
+    /* save to localStorage under user-based key */
+    saveCartToStorage() {
+      const userStore = useUserStore()
+      const key = `cart-${userStore.currentUser?.email || 'guest'}`
+      const plainData = {
+        items: this.items,
+        selectedISBNs: Array.from(this.selectedISBNs),
+      }
+      localStorage.setItem(key, JSON.stringify(plainData))
+    },
+
+    /* load from localStorage on app init */
+    loadCartFromStorage() {
+      const userStore = useUserStore()
+      const key = `cart-${userStore.currentUser?.email || 'guest'}`
+      const raw = localStorage.getItem(key)
+      if (!raw) return
+      try {
+        const parsed = JSON.parse(raw)
+        this.items = parsed.items || []
+        this.selectedISBNs = new Set(parsed.selectedISBNs || [])
+      } catch (e) {
+        console.error('Failed to load cart:', e)
+      }
     },
   },
 })

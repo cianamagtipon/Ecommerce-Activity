@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUserListStore } from '@/pinia/userlist'
 import { useUserStore } from '@/pinia/user'
 
-const userListStore = useUserListStore()
 const userStore = useUserStore()
 
 const props = defineProps<{ dialogVisible: boolean }>()
 const emit = defineEmits<{
   (e: 'update:dialogVisible', value: boolean): void
+  (e: 'login-success'): void // ✅ Add this
 }>()
 
 const dialogVisible = ref(props.dialogVisible)
@@ -36,14 +35,11 @@ async function handleLogin() {
 
   await new Promise((resolve) => setTimeout(resolve, 500)) // simulate delay
 
-  // Call login on userlist store
-  const success = userListStore.login(email.value, password.value)
+  const success = userStore.login(email.value, password.value)
 
   if (success) {
-    // Sync user store state to current logged in user
-    userStore.syncWithUserList()
-
     ElMessage.success('Login successful!')
+    emit('login-success')
     emit('update:dialogVisible', false)
     email.value = ''
     password.value = ''

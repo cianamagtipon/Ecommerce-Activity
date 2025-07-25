@@ -7,6 +7,7 @@ import { User, Iphone, Location, Message } from '@element-plus/icons-vue'
 const userStore = useUserStore()
 const isEditing = ref(false)
 
+// use current values from the store
 const editableForm = ref({
   name: userStore.name,
   email: userStore.email,
@@ -16,12 +17,15 @@ const editableForm = ref({
 
 function toggleEdit() {
   if (isEditing.value) {
-    userStore.name = editableForm.value.name
-    userStore.email = editableForm.value.email
-    userStore.phone = editableForm.value.phone
-    userStore.address = editableForm.value.address
+    userStore.updateUserData({
+      name: editableForm.value.name,
+      email: editableForm.value.email,
+      phone: editableForm.value.phone,
+      address: editableForm.value.address,
+    })
     ElMessage.success('Profile updated')
   } else {
+    // reset form to current values
     editableForm.value = {
       name: userStore.name,
       email: userStore.email,

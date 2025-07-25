@@ -1,62 +1,93 @@
 import { defineStore } from 'pinia'
-import { useUserListStore } from './userlist'
-import type { UserData } from '@/types/users'
+import type { User } from '@/types/user'
+
+function getStoredUsers(): User[] {
+  return JSON.parse(localStorage.getItem('Users') || '[]') as User[]
+}
+
+function setStoredUsers(users: User[]) {
+  localStorage.setItem('Users', JSON.stringify(users))
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    address: '',
-    isLoggedIn: false,
+    currentUser: null as User | null,
   }),
 
   getters: {
-    isAuthenticated: (state) => state.isLoggedIn,
-    userEmail: (state) => state.email,
-    userName: (state) => state.name,
+    isLoggedIn: (state): boolean => !!state.currentUser,
+    name: (state): string => state.currentUser?.name ?? '',
+    email: (state): string => state.currentUser?.email ?? '',
+    address: (state): string => state.currentUser?.address ?? '',
+    phone: (state): string => state.currentUser?.phone ?? '',
   },
 
   actions: {
-    syncWithUserList() {
-      const userlistStore = useUserListStore()
-      if (userlistStore.isLoggedIn && userlistStore.currentUser) {
-        const u = userlistStore.currentUser
-        this.name = u.name
-        this.email = u.email
-        this.password = u.password
-        this.phone = u.phone || ''
-        this.address = u.address || ''
-        this.isLoggedIn = true
-      } else {
-        this.$reset()
+    login(email: string, password: string): boolean {
+      const users = getStoredUsers()
+      const normalizedEmail = email.trim().toLowerCase()
+
+      const user = users.find(
+        (u) =>
+          u.email.toLowerCase() === normalizedEmail && u.password === password,
+      )
+
+      if (user) {
+        this.currentUser = user
+        localStorage.setItem('currentUser', user.email)
+        return true
       }
+
+      return false
     },
 
-    login(email: string, password: string): boolean {
-      const userlistStore = useUserListStore()
-      const success = userlistStore.login(email, password)
-      if (success) this.syncWithUserList()
-      else this.$reset()
-      return success
+    register(user: User): boolean {
+      const users = getStoredUsers()
+      const normalizedEmail = user.email.trim().toLowerCase()
+
+      const exists = users.some(
+        (u) => u.email.toLowerCase() === normalizedEmail,
+      )
+      if (exists) return false
+
+      user.email = normalizedEmail
+      users.push(user)
+      setStoredUsers(users)
+      localStorage.setItem('currentUser', user.email)
+
+      this.currentUser = user
+      return true
     },
 
     logout() {
-      const userlistStore = useUserListStore()
-      userlistStore.logout()
-      this.$reset()
+      this.currentUser = null
+      localStorage.removeItem('currentUser')
     },
 
-    register(user: UserData) {
-      const userlistStore = useUserListStore()
-      userlistStore.register(user)
-      this.syncWithUserList()
+    loadUserFromStorage() {
+      const email = localStorage.getItem('currentUser')
+      if (email) {
+        const users = getStoredUsers()
+        const user = users.find((u) => u.email === email)
+        if (user) {
+          this.currentUser = user
+        }
+      }
+    },
+
+    updateUserData(newData: Partial<User>) {
+      if (!this.currentUser) return
+
+      const users = getStoredUsers()
+      const idx = users.findIndex((u) => u.email === this.currentUser!.email)
+
+      if (idx !== -1) {
+        users[idx] = { ...users[idx], ...newData }
+        this.currentUser = users[idx]
+        setStoredUsers(users)
+      }
     },
   },
 
-  persist: {
-    key: 'user',
-    storage: localStorage,
-  },
+  persist: true,
 })

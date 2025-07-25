@@ -10,13 +10,23 @@ import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
+import { useUserStore } from '@/pinia/user'
+import { useCartStore } from '@/pinia/cart'
+
 const app = createApp(App)
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
-app.use(router)
 app.use(pinia)
+app.use(router)
 app.use(ElementPlus)
+
+// load stores before app mount
+const userStore = useUserStore()
+const cartStore = useCartStore()
+
+userStore.loadUserFromStorage()
+cartStore.loadCartFromStorage()
 
 app.mount('#app')
