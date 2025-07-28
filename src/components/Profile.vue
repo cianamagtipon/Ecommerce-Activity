@@ -9,7 +9,7 @@ import Orders from './profile/Orders.vue'
       <User />
     </div>
 
-    <div class="order-history">
+    <div class="orders">
       <Orders />
     </div>
   </div>

@@ -25,6 +25,12 @@ export const useCartStore = defineStore('cart', {
     isAllSelected: (state) =>
       state.items.length > 0 &&
       state.items.every((item) => state.selectedISBNs.has(item.product.isbn)),
+
+    selectedItemsDetails(state) {
+      return state.items.filter((item) =>
+        state.selectedISBNs.has(item.product.isbn),
+      )
+    },
   },
 
   actions: {
@@ -85,6 +91,10 @@ export const useCartStore = defineStore('cart', {
 
     clearSelected() {
       this.selectedISBNs.clear()
+    },
+
+    removeItems(isbns: Set<string>) {
+      this.items = this.items.filter((item) => !isbns.has(item.product.isbn))
     },
 
     saveCartToStorage() {

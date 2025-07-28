@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Order, OrderItem } from '@/types/order'
+import type { Order, OrderItem, OrderStatus } from '@/types/order'
 
 export const useOrderStore = defineStore('orders', {
   state: () => ({
@@ -34,6 +34,7 @@ export const useOrderStore = defineStore('orders', {
         date: new Date(),
         items: orderItems,
         total,
+        status: 'pending',
       }
 
       if (!this.orders[userEmail]) {
@@ -45,6 +46,16 @@ export const useOrderStore = defineStore('orders', {
 
     clearOrders(email: string) {
       delete this.orders[email]
+    },
+
+    updateOrderStatus(email: string, orderId: string, newStatus: OrderStatus) {
+      const userOrders = this.orders[email]
+      if (!userOrders) return
+
+      const order = userOrders.find((o) => o.id === orderId)
+      if (order) {
+        order.status = newStatus
+      }
     },
   },
 
@@ -61,6 +72,7 @@ export const useOrderStore = defineStore('orders', {
             converted[key] = parsed.orders[key].map((order: any) => ({
               ...order,
               date: new Date(order.date),
+              status: order.status || 'pending',
             }))
           }
           return { orders: converted }

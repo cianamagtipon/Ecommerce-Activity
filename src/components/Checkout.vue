@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useUserStore } from '@/pinia/user'
-import { useCheckoutStore } from '@/pinia/checkout'
-
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Edit, Check } from '@element-plus/icons-vue'
 
+import { useUserStore } from '@/pinia/user'
+import { useCheckoutStore } from '@/pinia/checkout'
+import { useCartStore } from '@/pinia/cart'
+import { useOrderStore } from '@/pinia/orders'
 import type { FormInstance } from 'element-plus'
-
 import OrderSummary from './OrderSummary.vue'
 
 const userStore = useUserStore()
 const checkoutStore = useCheckoutStore()
+const cartStore = useCartStore()
+const orderStore = useOrderStore()
+const router = useRouter()
 
 const isEditingPhone = ref(false)
 const isEditingAddress = ref(false)
@@ -42,7 +46,7 @@ function placeOrder() {
       return
     }
 
-    // save to user store
+    // save user data
     userStore.updateUserData({
       name: editableForm.value.name,
       email: editableForm.value.email,
@@ -50,12 +54,20 @@ function placeOrder() {
       address: editableForm.value.address,
     })
 
-    // proceed with order logic
-    console.log('Placing order with:', {
-      user: editableForm.value,
-      items: selectedItems.value,
-    })
+    // save order to store
+    orderStore.placeOrder(selectedItems.value, userStore.email)
+
+    // remove selected items from cart in one go
+    cartStore.selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
+    cartStore.selectedISBNs.clear()
+    cartStore.saveCartToStorage()
+
+    // clear selection state
+    cartStore.clearSelected()
+    checkoutStore.clearSelectedItems()
+
     ElMessage.success('Order placed successfully!')
+    router.push('/home')
   })
 }
 

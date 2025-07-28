@@ -1,3 +1,5 @@
+export type OrderStatus = 'pending' | 'shipped' | 'delivered'
+
 export type OrderItem = {
   isbn: string
   title: string
@@ -10,4 +12,5 @@ export type Order = {
   date: Date
   items: OrderItem[]
   total: number
+  status: OrderStatus
 }

@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Product } from '@/types/product'
-import { useUserStore } from '@/pinia/user'
-import { useOrderStore } from '@/pinia/orders'
+
 import { useCheckoutStore } from '@/pinia/checkout'
-import { ElMessage } from 'element-plus'
 
 const checkoutStore = useCheckoutStore()
-
-const userStore = useUserStore()
-const orderStore = useOrderStore()
 
 const props = defineProps<{
   selectedItems?: { product: Product; quantity: number }[]
@@ -46,12 +41,6 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
 }
 
 function handleCheckout() {
-  if (!userStore.email) {
-    ElMessage.error('Please log in to place an order.')
-    return
-  }
-
-  orderStore.placeOrder(selectedItems.value, userStore.email)
   emit('button-click')
 }
 </script>
