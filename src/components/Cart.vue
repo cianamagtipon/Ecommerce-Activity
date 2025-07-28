@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeMount } from 'vue'
 import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { useCartStore } from '@/pinia/cart'
 import { ElMessageBox } from 'element-plus'
 
@@ -9,11 +8,11 @@ import CartHeader from './cart/CartHeader.vue'
 import CartCards from './cart/CartCards.vue'
 import CartActions from './cart/CartActions.vue'
 import OrderSummary from './OrderSummary.vue'
+import { useCheckoutStore } from '@/pinia/checkout'
 
 const router = useRouter()
-
 const cartStore = useCartStore()
-const { selectedISBNs } = storeToRefs(cartStore)
+const checkoutStore = useCheckoutStore()
 
 const allISBNs = computed(() =>
   cartStore.items.map((item) => item.product.isbn),
@@ -22,19 +21,25 @@ const allISBNs = computed(() =>
 const isAllSelected = computed(
   () =>
     allISBNs.value.length > 0 &&
-    allISBNs.value.every((isbn) => selectedISBNs.value.has(isbn)),
+    allISBNs.value.every((isbn) => cartStore.selectedISBNs.has(isbn)),
 )
 
 function toggleCard(isbn: string) {
-  selectedISBNs.value.has(isbn)
-    ? selectedISBNs.value.delete(isbn)
-    : selectedISBNs.value.add(isbn)
+  if (cartStore.selectedISBNs.has(isbn)) {
+    cartStore.selectedISBNs.delete(isbn)
+  } else {
+    cartStore.selectedISBNs.add(isbn)
+  }
+  cartStore.saveCartToStorage()
 }
 
 function toggleSelectAll() {
-  isAllSelected.value
-    ? selectedISBNs.value.clear()
-    : (selectedISBNs.value = new Set(allISBNs.value))
+  if (isAllSelected.value) {
+    cartStore.selectedISBNs.clear()
+  } else {
+    cartStore.selectedISBNs = new Set(allISBNs.value)
+  }
+  cartStore.saveCartToStorage()
 }
 
 async function removeSelected() {
@@ -48,19 +53,23 @@ async function removeSelected() {
         type: 'warning',
       },
     )
-    selectedISBNs.value.forEach((isbn) => cartStore.removeFromCart(isbn))
-    selectedISBNs.value.clear()
+    cartStore.selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
+    cartStore.selectedISBNs.clear()
+    cartStore.saveCartToStorage()
   } catch {}
 }
 
 function checkoutSelected() {
   const selectedItems = cartStore.items.filter((item) =>
-    selectedISBNs.value.has(item.product.isbn),
+    cartStore.selectedISBNs.has(item.product.isbn),
   )
-
-  console.log('Proceeding to checkout with:', selectedItems)
+  checkoutStore.setSelectedItems(selectedItems)
   router.push('/checkout')
 }
+
+onBeforeMount(() => {
+  cartStore.loadCartFromStorage()
+})
 </script>
 
 <template>
@@ -70,7 +79,7 @@ function checkoutSelected() {
       <CartActions
         v-if="cartStore.items.length > 0"
         :isAllSelected="isAllSelected"
-        :selectedISBNs="selectedISBNs"
+        :selectedISBNs="cartStore.selectedISBNs"
         @toggleSelectAll="toggleSelectAll"
         @removeSelected="removeSelected"
       />
@@ -79,7 +88,7 @@ function checkoutSelected() {
     <div class="cart-view">
       <CartCards
         :items="cartStore.items"
-        :selectedISBNs="selectedISBNs"
+        :selectedISBNs="cartStore.selectedISBNs"
         @toggleCard="toggleCard"
       />
     </div>
@@ -88,7 +97,9 @@ function checkoutSelected() {
       <OrderSummary
         v-if="cartStore.items.length > 0"
         :selectedItems="
-          cartStore.items.filter((item) => selectedISBNs.has(item.product.isbn))
+          cartStore.items.filter((item) =>
+            cartStore.selectedISBNs.has(item.product.isbn),
+          )
         "
         @button-click="checkoutSelected"
       />

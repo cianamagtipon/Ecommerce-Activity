@@ -87,7 +87,6 @@ export const useCartStore = defineStore('cart', {
       this.selectedISBNs.clear()
     },
 
-    /* save to localStorage under user-based key */
     saveCartToStorage() {
       const userStore = useUserStore()
       const key = `cart-${userStore.currentUser?.email || 'guest'}`
@@ -98,7 +97,6 @@ export const useCartStore = defineStore('cart', {
       localStorage.setItem(key, JSON.stringify(plainData))
     },
 
-    /* load from localStorage on app init */
     loadCartFromStorage() {
       const userStore = useUserStore()
       const key = `cart-${userStore.currentUser?.email || 'guest'}`

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/pinia/user'
-import { useCartStore } from '@/pinia/cart'
+import { useCheckoutStore } from '@/pinia/checkout'
+
 import { ElMessage } from 'element-plus'
 import { Edit, Check } from '@element-plus/icons-vue'
 
@@ -10,12 +11,13 @@ import type { FormInstance } from 'element-plus'
 import OrderSummary from './OrderSummary.vue'
 
 const userStore = useUserStore()
-const cartStore = useCartStore()
+const checkoutStore = useCheckoutStore()
 
 const isEditingPhone = ref(false)
 const isEditingAddress = ref(false)
 
 const formRef = ref<FormInstance>()
+const selectedItems = computed(() => checkoutStore.selectedItems)
 
 const editableForm = ref({
   name: userStore.name,
@@ -32,12 +34,6 @@ const rules = {
     { required: true, message: 'Address is required', trigger: 'blur' },
   ],
 }
-
-const selectedItems = computed(() =>
-  cartStore.items.filter((item) =>
-    cartStore.selectedISBNs.has(item.product.isbn),
-  ),
-)
 
 function placeOrder() {
   formRef.value?.validate((valid) => {
@@ -291,7 +287,7 @@ function toggleAddressEdit() {
   width: 100%;
   min-height: 3em;
   font-size: 14px;
-  color: #bba68b;
+  color: #3b2a22; /* dark brown */
 }
 
 .full-width-phone ::v-deep(.el-input__wrapper) {

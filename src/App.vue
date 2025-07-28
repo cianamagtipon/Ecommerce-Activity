@@ -5,7 +5,7 @@ import Login from './components/auth/Login.vue'
 import Register from './components/auth/Register.vue'
 import Footer from './components/Footer.vue'
 
-import { ref, onBeforeMount, type Ref } from 'vue'
+import { ref, onBeforeMount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
@@ -46,8 +46,9 @@ function handleLogout() {
 
 const route = useRoute()
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   userStore.loadUserFromStorage()
+  await nextTick()
   cartStore.loadCartFromStorage()
 })
 </script>

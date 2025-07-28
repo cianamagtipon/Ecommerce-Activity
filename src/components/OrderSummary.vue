@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Product } from '@/types/product'
+import { useUserStore } from '@/pinia/user'
+import { useOrderStore } from '@/pinia/orders'
+import { useCheckoutStore } from '@/pinia/checkout'
+import { ElMessage } from 'element-plus'
+
+const checkoutStore = useCheckoutStore()
+
+const userStore = useUserStore()
+const orderStore = useOrderStore()
 
 const props = defineProps<{
-  selectedItems: { product: Product; quantity: number }[]
+  selectedItems?: { product: Product; quantity: number }[]
   buttonLabel?: string
 }>()
+
+const selectedItems = computed(() =>
+  props.selectedItems?.length
+    ? props.selectedItems
+    : checkoutStore.selectedItems,
+)
 
 const emit = defineEmits<{
   (e: 'button-click'): void
 }>()
 
 const orderTotal = computed(() =>
-  props.selectedItems.reduce((sum, item) => {
+  selectedItems.value.reduce((sum, item) => {
     const discountedPrice =
       item.product.retail * (1 - item.product.discount / 100)
     return sum + discountedPrice * item.quantity
@@ -25,9 +40,19 @@ function getDiscountedPrice(row: { product: Product; quantity: number }) {
 }
 
 function getRowClassName({ rowIndex }: { rowIndex: number }) {
-  return rowIndex === props.selectedItems.length - 1
+  return rowIndex === selectedItems.value.length - 1
     ? 'last-row'
     : 'subtotal-row'
+}
+
+function handleCheckout() {
+  if (!userStore.email) {
+    ElMessage.error('Please log in to place an order.')
+    return
+  }
+
+  orderStore.placeOrder(selectedItems.value, userStore.email)
+  emit('button-click')
 }
 </script>
 
@@ -73,16 +98,14 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
       <p>No items selected.</p>
     </div>
 
-    <!-- <template #footer> -->
     <div v-if="selectedItems.length > 0">
       <h3>
         Order Total: <span class="total"> ₱{{ orderTotal.toFixed(2) }}</span>
       </h3>
-      <el-button class="checkout-button" @click="$emit('button-click')">
+      <el-button class="checkout-button" @click="handleCheckout">
         {{ buttonLabel || 'Checkout' }}
       </el-button>
     </div>
-    <!-- </template> -->
   </el-card>
 </template>
 
