@@ -2,7 +2,7 @@
 import { useProductStore } from '@/pinia/products'
 import { useCartStore } from '@/pinia/cart'
 import { computed, onMounted, ref, watch } from 'vue'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import StoreCards from './StoreCards.vue'
 
 import 'element-plus/es/components/message-box/style/css'
@@ -37,11 +37,10 @@ async function handleAddToCart() {
     (item) => item.product.isbn === prod.isbn,
   )
 
-  if (existingItem) {
-    try {
+  try {
+    if (existingItem) {
       await ElMessageBox.confirm(
-        `You have ${existingItem.quantity} of the same item in your cart.\n
-        Would you like to add ${quantity.value} more?`,
+        `You have ${existingItem.quantity} of the same item in your cart.\nWould you like to add ${quantity.value} more?`,
         'Item Already in Cart',
         {
           confirmButtonText: 'Add to Cart',
@@ -49,15 +48,22 @@ async function handleAddToCart() {
           type: 'warning',
         },
       )
-      cartStore.addToCart(prod, quantity.value)
-      quantity.value = 1
-    } catch {
-      // cancel clicked. does nothing.
+    } else {
+      await ElMessageBox.confirm(
+        `Would you like to add "${prod.title}" to your cart?`,
+        'Add to Cart',
+        {
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'No',
+          type: 'info',
+        },
+      )
     }
-  } else {
+
     cartStore.addToCart(prod, quantity.value)
     quantity.value = 1
-  }
+    ElMessage.success('Added to cart!')
+  } catch {}
 }
 
 onMounted(() => {
@@ -88,8 +94,18 @@ watch(product, (newProduct) => {
         <p class="product-author">by {{ product.author }}</p>
 
         <div class="price-block">
-          <span class="price">₱{{ product.retail }}</span>
-          <span class="discount">-{{ product.discount }}%</span>
+          <template v-if="product.discount > 0">
+            <span class="original-price">₱{{ product.retail.toFixed(2) }}</span>
+            <span class="price"
+              >₱{{
+                (product.retail * (1 - product.discount / 100)).toFixed(2)
+              }}</span
+            >
+            <span class="discount">-{{ product.discount }}%</span>
+          </template>
+          <template v-else>
+            <span class="price">₱{{ product.retail.toFixed(2) }}</span>
+          </template>
         </div>
 
         <div class="product-meta">
@@ -150,7 +166,7 @@ watch(product, (newProduct) => {
 .product-detail {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: 5rem;
   margin-bottom: 3rem;
 }
 
@@ -159,6 +175,7 @@ watch(product, (newProduct) => {
   height: auto;
   object-fit: cover;
   border-radius: 12px;
+  margin-top: 2rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -194,12 +211,19 @@ watch(product, (newProduct) => {
   font-weight: bold;
 }
 
+.original-price {
+  text-decoration: line-through;
+  color: #bba68b;
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
 .discount {
   background: #f8e1c3;
   color: #b84727;
   padding: 0.25rem 0.75rem;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .product-meta p {
@@ -233,12 +257,12 @@ watch(product, (newProduct) => {
 }
 
 .suggested-section {
-  margin-top: 3rem;
+  margin-top: 5rem;
 }
 
 .suggested-section h2 {
   font-size: 1.5rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .suggested-grid {

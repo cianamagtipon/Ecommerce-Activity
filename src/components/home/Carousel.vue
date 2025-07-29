@@ -50,8 +50,8 @@ const carouselSlides = [
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 16px;
-  margin: 0.5rem auto;
+  border-radius: 8px;
+  margin: 0 auto;
   box-shadow: 0 8px 16px rgba(93, 61, 46, 0.5);
 }
 
@@ -60,7 +60,7 @@ const carouselSlides = [
   height: 50vh;
   max-width: 1440px;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 8px;
   transition: ease;
 }
 
