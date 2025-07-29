@@ -113,6 +113,9 @@ onBeforeMount(() => {
   grid-template-columns: 2fr 1fr;
   grid-template-rows: auto 1fr;
   gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
 }
 
 .cart-header {
@@ -142,18 +145,35 @@ onBeforeMount(() => {
   .cart {
     display: flex;
     flex-direction: column;
+    max-width: 100%;
+    padding: 1rem;
   }
 
   .cart-header,
   .cart-view,
-  .order-summary {
+  .order-summary,
+  .cart-actions {
     grid-column: unset;
     grid-row: unset;
     width: 100%;
   }
 
-  .order-summary {
+  .cart-header {
+    order: 1;
+  }
+
+  .cart-actions {
+    order: 2;
+    margin-top: 0.5rem;
+  }
+
+  .cart-view {
     order: 3;
+  }
+
+  .order-summary {
+    order: 4;
+    padding-top: 1rem;
   }
 }
 </style>

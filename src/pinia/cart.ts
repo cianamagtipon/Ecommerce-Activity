@@ -91,6 +91,7 @@ export const useCartStore = defineStore('cart', {
 
     clearSelected() {
       this.selectedISBNs.clear()
+      this.saveCartToStorage()
     },
 
     removeItems(isbns: Set<string>) {

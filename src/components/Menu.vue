@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeMount } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, Search } from '@element-plus/icons-vue'
 import { TagIcon, ShoppingCartIcon } from '@heroicons/vue/24/solid'
 import { Bars3Icon } from '@heroicons/vue/24/outline'
 import { useScreenSize } from '@/composables/screenSize'
+
+import CartDropdown from '@/components/cart/CartDropdown.vue'
 
 const fullscreenLoading = ref(false)
 
@@ -22,8 +24,6 @@ const handleSelect = (key: string) => {
   if (key === '1-1') router.push('/home')
   else if (key === '1-2') router.push('/store')
   else if (key === '1-3') router.push('/profile')
-  else if (key === '1-4') router.push('/cart')
-  else if (key === '1-5') router.push('/checkout')
   else if (key === '2-1' || key === '2-2') {
     console.log('Clicked:', key)
   }
@@ -57,8 +57,6 @@ const syncActiveIndex = () => {
   else if (path.startsWith('/store') || path.startsWith('/genre'))
     activeIndex.value = '1-2'
   else if (path.startsWith('/profile')) activeIndex.value = '1-3'
-  else if (path.startsWith('/cart')) activeIndex.value = '1-4'
-  else if (path.startsWith('/checkout')) activeIndex.value = '1-5'
   else activeIndex.value = ''
 }
 
@@ -81,20 +79,11 @@ onMounted(syncActiveIndex)
         <el-menu-item index="1-1">Home</el-menu-item>
         <el-menu-item index="1-2">Store</el-menu-item>
         <el-menu-item index="1-3">Profile</el-menu-item>
-        <el-menu-item index="1-4">Cart</el-menu-item>
-        <el-menu-item index="1-5">Checkout</el-menu-item>
 
         <div class="menu-spacer"></div>
-        <el-sub-menu index="2">
-          <template #title>Menu</template>
-          <el-menu-item index="2-1">Reset</el-menu-item>
-          <el-menu-item
-            class="logout-item"
-            index="2-2"
-            style="color: #ff2200af; font-weight: 600"
-            >Logout</el-menu-item
-          >
-        </el-sub-menu>
+        <div class="cart-menu-wrapper">
+          <CartDropdown />
+        </div>
       </el-menu>
 
       <!-- Mobile Navbar -->
@@ -241,6 +230,12 @@ onMounted(syncActiveIndex)
 .desktop-navbar {
   border: none !important;
   font-weight: 600;
+}
+
+.cart-menu-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
 }
 
 /* BUTTON */

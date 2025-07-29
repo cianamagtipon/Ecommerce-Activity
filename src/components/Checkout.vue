@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Edit, Check } from '@element-plus/icons-vue'
 
@@ -21,7 +21,6 @@ const isEditingPhone = ref(false)
 const isEditingAddress = ref(false)
 
 const formRef = ref<FormInstance>()
-const selectedItems = computed(() => checkoutStore.selectedItems)
 
 const editableForm = ref({
   name: userStore.name,
@@ -39,6 +38,19 @@ const rules = {
   ],
 }
 
+onMounted(() => {
+  if (checkoutStore.selectedItems.length === 0) {
+    const savedOrder = localStorage.getItem('currentOrder')
+    if (savedOrder) {
+      const parsedItems = JSON.parse(savedOrder)
+      checkoutStore.setSelectedItems(parsedItems)
+    } else {
+    }
+  }
+})
+
+const selectedItems = computed(() => checkoutStore.selectedItems)
+
 function placeOrder() {
   formRef.value?.validate((valid) => {
     if (!valid) {
@@ -46,7 +58,6 @@ function placeOrder() {
       return
     }
 
-    // save user data
     userStore.updateUserData({
       name: editableForm.value.name,
       email: editableForm.value.email,
@@ -54,15 +65,12 @@ function placeOrder() {
       address: editableForm.value.address,
     })
 
-    // save order to store
     orderStore.placeOrder(selectedItems.value, userStore.email)
 
-    // remove selected items from cart in one go
     cartStore.selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
     cartStore.selectedISBNs.clear()
     cartStore.saveCartToStorage()
 
-    // clear selection state
     cartStore.clearSelected()
     checkoutStore.clearSelectedItems()
 
@@ -84,6 +92,10 @@ function toggleAddressEdit() {
   }
   isEditingAddress.value = !isEditingAddress.value
 }
+
+onBeforeRouteLeave(() => {
+  checkoutStore.clearSelectedItems()
+})
 </script>
 
 <template>
@@ -229,6 +241,8 @@ function toggleAddressEdit() {
   grid-template-columns: 1.3fr 1fr;
   gap: 30px;
   padding: 1.5rem;
+  margin: 0 auto;
+  max-width: 1200px;
 }
 
 .checkout-header {
