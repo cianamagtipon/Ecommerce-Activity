@@ -44,15 +44,16 @@ const editableForm = ref({
     province: userStore.currentUser?.address?.province ?? '',
     city: userStore.currentUser?.address?.city ?? '',
     home: userStore.currentUser?.address?.home ?? '',
-    postalCode: userStore.currentUser?.address?.zip ?? '',
+    zip: userStore.currentUser?.address?.zip ?? '',
   },
 })
 
 watch(
   () => editableForm.value.address.province,
-  (newProvince) => {
+  (newProvince, oldProvince) => {
     cities.value = getCitiesByProvince(newProvince)
-    if (!isAutofillingFromZip.value) {
+
+    if (!isAutofillingFromZip.value && newProvince !== oldProvince) {
       editableForm.value.address.city = ''
     }
   },
@@ -60,7 +61,7 @@ watch(
 )
 
 watch(
-  () => editableForm.value.address.postalCode,
+  () => editableForm.value.address.zip,
   (zip) => {
     const cleanedZip = removeAllSpaces(zip)
     const match = findCityByZipPrefix(cleanedZip)
@@ -82,8 +83,8 @@ watch(
     () => editableForm.value.address.city,
   ],
   ([newProvince, newCity]) => {
-    if (!newProvince && !newCity && editableForm.value.address.postalCode) {
-      editableForm.value.address.postalCode = ''
+    if (!newProvince && !newCity && editableForm.value.address.zip) {
+      editableForm.value.address.zip = ''
     }
   },
 )
@@ -104,7 +105,7 @@ function blurFormatField(fieldPath: string) {
       case 'phone':
         val = formatPhone(val)
         break
-      case 'postalCode':
+      case 'zip':
         val = removeAllSpaces(val)
         break
       default:
@@ -116,23 +117,30 @@ function blurFormatField(fieldPath: string) {
 
 function getFullAddress() {
   const a = editableForm.value.address
-  return [a.province, a.city, a.home, a.postalCode].filter(Boolean).join(', ')
+  return [a.province, a.city, a.home, a.zip].filter(Boolean).join(', ')
 }
 
 async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
   loading.value = true
   try {
     let updateData: Record<string, any> = {}
+
     if (field === 'address') {
       updateData.address = { ...editableForm.value.address }
     } else {
       updateData[field] = cleanSpaces(editableForm.value[field])
-      if (field === 'email')
-        updateData.email = formatEmail(editableForm.value.email)
-      if (field === 'phone')
-        updateData.phone = formatPhone(editableForm.value.phone)
+      if (field === 'email') updateData.email = formatEmail(updateData.email)
+      if (field === 'phone') updateData.phone = formatPhone(updateData.phone)
     }
+
     await userStore.updateUserData(updateData)
+
+    if (field === 'address') {
+      Object.assign(editableForm.value.address, {
+        ...userStore.currentUser?.address,
+      })
+    }
+
     ElMessage.success(
       `${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`,
     )
@@ -307,10 +315,10 @@ function toggleEdit(field: 'name' | 'email' | 'phone' | 'address') {
           />
 
           <el-input
-            v-model="editableForm.address.postalCode"
+            v-model="editableForm.address.zip"
             placeholder="Postal Code"
             maxlength="4"
-            class="address-postal"
+            class="address-zip"
           />
         </div>
       </div>
@@ -389,7 +397,7 @@ function toggleEdit(field: 'name' | 'email' | 'phone' | 'address') {
 }
 
 .address-input,
-.address-postal {
+.address-zip {
   margin-top: 0.75rem;
   width: 100%;
 }

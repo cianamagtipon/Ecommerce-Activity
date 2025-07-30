@@ -2,14 +2,7 @@
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import {
-  User,
-  Message,
-  Iphone,
-  Location,
-  Edit,
-  Check,
-} from '@element-plus/icons-vue'
+import { Check, Edit } from '@element-plus/icons-vue'
 
 import { useUserStore } from '@/pinia/user'
 import { useCheckoutStore } from '@/pinia/checkout'
@@ -53,7 +46,7 @@ const editableForm = ref({
     province: userStore.address?.province ?? '',
     city: userStore.address?.city ?? '',
     home: userStore.address?.home ?? '',
-    postalCode: userStore.address?.zip ?? '',
+    zip: userStore.address?.zip ?? '',
   },
   notes: '',
 })
@@ -70,7 +63,7 @@ watch(
 )
 
 watch(
-  () => editableForm.value.address.postalCode,
+  () => editableForm.value.address.zip,
   (zip) => {
     const cleanedZip = removeAllSpaces(zip)
     const match = findCityByZipPrefix(cleanedZip)
@@ -92,8 +85,8 @@ watch(
     () => editableForm.value.address.city,
   ],
   ([newProvince, newCity]) => {
-    if (!newProvince && !newCity && editableForm.value.address.postalCode) {
-      editableForm.value.address.postalCode = ''
+    if (!newProvince && !newCity && editableForm.value.address.zip) {
+      editableForm.value.address.zip = ''
     }
   },
 )
@@ -114,7 +107,7 @@ function blurFormatField(fieldPath: string) {
       case 'phone':
         val = formatPhone(val)
         break
-      case 'postalCode':
+      case 'zip':
         val = removeAllSpaces(val)
         break
       default:
@@ -126,7 +119,7 @@ function blurFormatField(fieldPath: string) {
 
 function getFullAddress() {
   const a = editableForm.value.address
-  return [a.home, a.city, a.province, a.postalCode].filter(Boolean).join(', ')
+  return [a.home, a.city, a.province, a.zip].filter(Boolean).join(', ')
 }
 
 async function saveField(field: 'phone' | 'address') {
@@ -135,7 +128,14 @@ async function saveField(field: 'phone' | 'address') {
     const updateData =
       field === 'phone'
         ? { phone: formatPhone(cleanSpaces(editableForm.value.phone)) }
-        : { address: { ...editableForm.value.address } }
+        : {
+            address: {
+              province: cleanSpaces(editableForm.value.address.province),
+              city: cleanSpaces(editableForm.value.address.city),
+              home: cleanSpaces(editableForm.value.address.home),
+              zip: removeAllSpaces(editableForm.value.address.zip),
+            },
+          }
 
     await userStore.updateUserData(updateData)
     ElMessage.success(
@@ -162,21 +162,45 @@ function toggleEdit(field: 'phone' | 'address') {
 
 const selectedItems = computed(() => checkoutStore.selectedItems)
 
-function placeOrder() {
-  formRef.value?.validate((valid) => {
-    if (!valid) {
-      ElMessage.error('You must have a mailing address to place an order.')
-      return
-    }
+async function placeOrder() {
+  const { province, city, home, zip } = editableForm.value.address
+  if (!province || !city || !home || !zip) {
+    isEditingAddress.value = true
+    ElMessage.error(
+      'Please complete your shipping address before placing an order.',
+    )
+    return
+  }
 
-    userStore.updateUserData({
-      name: editableForm.value.name,
-      email: editableForm.value.email,
-      phone: editableForm.value.phone,
-      address: { ...editableForm.value.address },
+  const valid = await formRef.value?.validate()
+  if (!valid) {
+    ElMessage.error('Please correct the form errors before placing an order.')
+    return
+  }
+
+  if (isEditingAddress.value || isEditingPhone.value) {
+    ElMessage.error(
+      'Please save your contact and address info before placing an order.',
+    )
+    return
+  }
+
+  try {
+    loading.value = true
+
+    await userStore.updateUserData({
+      name: cleanSpaces(editableForm.value.name),
+      email: formatEmail(editableForm.value.email),
+      phone: formatPhone(cleanSpaces(editableForm.value.phone)),
+      address: {
+        province: cleanSpaces(editableForm.value.address.province),
+        city: cleanSpaces(editableForm.value.address.city),
+        home: cleanSpaces(editableForm.value.address.home),
+        zip: removeAllSpaces(editableForm.value.address.zip),
+      },
     })
 
-    orderStore.placeOrder(selectedItems.value, userStore.email)
+    await orderStore.placeOrder(selectedItems.value, userStore.email)
 
     cartStore.selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
     cartStore.selectedISBNs.clear()
@@ -186,7 +210,13 @@ function placeOrder() {
 
     ElMessage.success('Order placed successfully!')
     router.push('/home')
-  })
+  } catch (e) {
+    ElMessage.error(
+      'Order failed: ' + (e instanceof Error ? e.message : 'Unknown error'),
+    )
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {
@@ -220,7 +250,7 @@ onBeforeRouteLeave(() => {
           'address.province': [required],
           'address.city': [required],
           'address.home': [required],
-          'address.postalCode': [required, postalCodeRule],
+          'address.zip': [required, postalCodeRule],
           phone: [phoneRule],
         }"
       >
@@ -346,11 +376,11 @@ onBeforeRouteLeave(() => {
               />
 
               <el-input
-                v-model="editableForm.address.postalCode"
+                v-model="editableForm.address.zip"
                 placeholder="Postal Code"
                 maxlength="4"
-                @blur="blurFormatField('address.postalCode')"
-                class="address-postal"
+                @blur="blurFormatField('address.zip')"
+                class="address-zip"
               />
             </div>
           </div>
@@ -474,7 +504,7 @@ onBeforeRouteLeave(() => {
 }
 
 .address-input,
-.address-postal {
+.address-zip {
   margin-top: 0.75rem;
   width: 100%;
 }

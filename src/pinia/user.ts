@@ -86,38 +86,33 @@ export const useUserStore = defineStore('user', {
     },
 
     loadUserFromStorage() {
-      const email = localStorage.getItem('currentUser')
-      if (email) {
-        const users = getStoredUsers()
-        const user = users.find((u) => u.email === email)
-        if (user) {
-          // migrate legacy string address
-          if (typeof user.address === 'string') {
-            user.address = { home: user.address }
-          }
+      const stored = localStorage.getItem('CurrentUser')
+      if (stored) {
+        const user = JSON.parse(stored) as User
 
-          this.currentUser = user
+        // convert legacy string address
+        if (typeof user.address === 'string') {
+          user.address = { home: user.address }
         }
+
+        this.currentUser = user
       }
     },
 
-    updateUserData(newData: Partial<User>) {
-      if (!this.currentUser) return
-
-      const users = getStoredUsers()
-      const idx = users.findIndex((u) => u.email === this.currentUser!.email)
+    updateUserData(updateData: Partial<User>) {
+      const users = JSON.parse(localStorage.getItem('Users') || '[]')
+      const idx = users.findIndex(
+        (u: User) => u.email === this.currentUser?.email,
+      )
 
       if (idx !== -1) {
         const oldUser = users[idx]
-        const oldAddress =
-          typeof oldUser.address === 'object' ? oldUser.address : {}
-
-        const newAddress =
-          typeof newData.address === 'object' ? newData.address : {}
+        const oldAddress = oldUser.address || {}
+        const newAddress = updateData.address || {}
 
         users[idx] = {
           ...oldUser,
-          ...newData,
+          ...updateData,
           address: {
             ...oldAddress,
             ...newAddress,
@@ -125,7 +120,8 @@ export const useUserStore = defineStore('user', {
         }
 
         this.currentUser = users[idx]
-        setStoredUsers(users)
+        localStorage.setItem('Users', JSON.stringify(users))
+        localStorage.setItem('CurrentUser', JSON.stringify(this.currentUser))
       }
     },
   },

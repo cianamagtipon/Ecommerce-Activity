@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Product } from '@/types/product'
-
+import type { FormInstance } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { useCheckoutStore } from '@/pinia/checkout'
-
-const checkoutStore = useCheckoutStore()
 
 const props = defineProps<{
   selectedItems?: { product: Product; quantity: number }[]
   buttonLabel?: string
+  formRef?: FormInstance | null
 }>()
+
+const emit = defineEmits<{
+  (e: 'button-click'): void
+}>()
+
+const checkoutStore = useCheckoutStore()
 
 const selectedItems = computed(() =>
   props.selectedItems?.length
     ? props.selectedItems
     : checkoutStore.selectedItems,
 )
-
-const emit = defineEmits<{
-  (e: 'button-click'): void
-}>()
 
 const orderTotal = computed(() =>
   selectedItems.value.reduce((sum, item) => {
@@ -40,8 +42,17 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
     : 'subtotal-row'
 }
 
-function handleCheckout() {
-  emit('button-click')
+async function handleCheckout() {
+  if (props.formRef) {
+    try {
+      await props.formRef.validate()
+      emit('button-click')
+    } catch (err) {
+      ElMessage.error('Please complete all required fields.')
+    }
+  } else {
+    emit('button-click')
+  }
 }
 </script>
 
@@ -89,7 +100,7 @@ function handleCheckout() {
 
     <div v-if="selectedItems.length > 0">
       <h3>
-        Order Total: <span class="total"> ₱{{ orderTotal.toFixed(2) }}</span>
+        Order Total: <span class="total">₱{{ orderTotal.toFixed(2) }}</span>
       </h3>
       <el-button class="checkout-button" @click="handleCheckout">
         {{ buttonLabel || 'Checkout' }}
@@ -150,7 +161,6 @@ function handleCheckout() {
   font-weight: 600;
 }
 
-/* remove element plus table cell borders */
 .subtotal-table ::v-deep(.el-table__cell) {
   border-bottom: none !important;
   padding: 0.2rem;
