@@ -18,8 +18,18 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: (state): boolean => !!state.currentUser,
     name: (state): string => state.currentUser?.name ?? '',
     email: (state): string => state.currentUser?.email ?? '',
-    address: (state): string => state.currentUser?.address ?? '',
     phone: (state): string => state.currentUser?.phone ?? '',
+
+    address: (state): User['address'] =>
+      state.currentUser?.address ?? undefined,
+
+    fullAddress: (state): string => {
+      const addr = state.currentUser?.address
+      if (!addr || typeof addr !== 'object') return ''
+      return [addr.home, addr.city, addr.province, addr.zip]
+        .filter(Boolean)
+        .join(', ')
+    },
   },
 
   actions: {
@@ -33,6 +43,11 @@ export const useUserStore = defineStore('user', {
       )
 
       if (user) {
+        // convert legacy string address to object if needed
+        if (typeof user.address === 'string') {
+          user.address = { home: user.address }
+        }
+
         this.currentUser = user
         localStorage.setItem('currentUser', user.email)
         return true
@@ -51,6 +66,12 @@ export const useUserStore = defineStore('user', {
       if (exists) return false
 
       user.email = normalizedEmail
+
+      // if address is missing or a string, convert it
+      if (typeof user.address === 'string') {
+        user.address = { home: user.address }
+      }
+
       users.push(user)
       setStoredUsers(users)
       localStorage.setItem('currentUser', user.email)
@@ -70,6 +91,11 @@ export const useUserStore = defineStore('user', {
         const users = getStoredUsers()
         const user = users.find((u) => u.email === email)
         if (user) {
+          // migrate legacy string address
+          if (typeof user.address === 'string') {
+            user.address = { home: user.address }
+          }
+
           this.currentUser = user
         }
       }
@@ -82,7 +108,22 @@ export const useUserStore = defineStore('user', {
       const idx = users.findIndex((u) => u.email === this.currentUser!.email)
 
       if (idx !== -1) {
-        users[idx] = { ...users[idx], ...newData }
+        const oldUser = users[idx]
+        const oldAddress =
+          typeof oldUser.address === 'object' ? oldUser.address : {}
+
+        const newAddress =
+          typeof newData.address === 'object' ? newData.address : {}
+
+        users[idx] = {
+          ...oldUser,
+          ...newData,
+          address: {
+            ...oldAddress,
+            ...newAddress,
+          },
+        }
+
         this.currentUser = users[idx]
         setStoredUsers(users)
       }

@@ -1,175 +1,402 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useUserStore } from '@/pinia/user'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { User, Iphone, Location, Message } from '@element-plus/icons-vue'
+import { useUserStore } from '@/pinia/user'
+import { useValidationRules } from '@/composables/validationRules'
+import { useFormatter } from '@/composables/formatter'
+import { useLocationSearch } from '@/composables/locationSearch'
+import {
+  User,
+  Message,
+  Iphone,
+  Location,
+  Edit,
+  Check,
+} from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
-const isEditing = ref(false)
+const { required, emailRule, phoneRule, postalCodeRule } = useValidationRules()
+const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail } =
+  useFormatter()
+const {
+  findCityByZipPrefix,
+  getCitiesByProvince,
+  getAllProvinces,
+  getPostalCodeSuggestions,
+} = useLocationSearch()
 
-// use current values from the store
+const provinces = getAllProvinces()
+const cities = ref<string[]>([])
+
+const isEditingName = ref(false)
+const isEditingEmail = ref(false)
+const isEditingPhone = ref(false)
+const isEditingAddress = ref(false)
+
+const loading = ref(false)
+const isAutofillingFromZip = ref(false)
+
 const editableForm = ref({
   name: userStore.name,
   email: userStore.email,
   phone: userStore.phone,
-  address: userStore.address,
+  address: {
+    province: userStore.currentUser?.address?.province ?? '',
+    city: userStore.currentUser?.address?.city ?? '',
+    home: userStore.currentUser?.address?.home ?? '',
+    postalCode: userStore.currentUser?.address?.zip ?? '',
+  },
 })
 
-function toggleEdit() {
-  if (isEditing.value) {
-    userStore.updateUserData({
-      name: editableForm.value.name,
-      email: editableForm.value.email,
-      phone: editableForm.value.phone,
-      address: editableForm.value.address,
-    })
-    ElMessage.success('Profile updated')
-  } else {
-    // reset form to current values
-    editableForm.value = {
-      name: userStore.name,
-      email: userStore.email,
-      phone: userStore.phone,
-      address: userStore.address,
+watch(
+  () => editableForm.value.address.province,
+  (newProvince) => {
+    cities.value = getCitiesByProvince(newProvince)
+    if (!isAutofillingFromZip.value) {
+      editableForm.value.address.city = ''
     }
-  }
+  },
+  { immediate: true },
+)
 
-  isEditing.value = !isEditing.value
+watch(
+  () => editableForm.value.address.postalCode,
+  (zip) => {
+    const cleanedZip = removeAllSpaces(zip)
+    const match = findCityByZipPrefix(cleanedZip)
+    if (match) {
+      isAutofillingFromZip.value = true
+      editableForm.value.address.province = match.province
+      cities.value = getCitiesByProvince(match.province)
+      editableForm.value.address.city = match.city
+      setTimeout(() => {
+        isAutofillingFromZip.value = false
+      }, 0)
+    }
+  },
+)
+
+watch(
+  [
+    () => editableForm.value.address.province,
+    () => editableForm.value.address.city,
+  ],
+  ([newProvince, newCity]) => {
+    if (!newProvince && !newCity && editableForm.value.address.postalCode) {
+      editableForm.value.address.postalCode = ''
+    }
+  },
+)
+
+function blurFormatField(fieldPath: string) {
+  const segments = fieldPath.split('.')
+  let target: any = editableForm.value
+  for (let i = 0; i < segments.length - 1; i++) {
+    target = target[segments[i]]
+  }
+  const key = segments[segments.length - 1]
+  if (typeof target[key] === 'string') {
+    let val = target[key]
+    switch (key) {
+      case 'email':
+        val = formatEmail(val)
+        break
+      case 'phone':
+        val = formatPhone(val)
+        break
+      case 'postalCode':
+        val = removeAllSpaces(val)
+        break
+      default:
+        val = cleanSpaces(val)
+    }
+    target[key] = val
+  }
+}
+
+function getFullAddress() {
+  const a = editableForm.value.address
+  return [a.province, a.city, a.home, a.postalCode].filter(Boolean).join(', ')
+}
+
+async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
+  loading.value = true
+  try {
+    let updateData: Record<string, any> = {}
+    if (field === 'address') {
+      updateData.address = { ...editableForm.value.address }
+    } else {
+      updateData[field] = cleanSpaces(editableForm.value[field])
+      if (field === 'email')
+        updateData.email = formatEmail(editableForm.value.email)
+      if (field === 'phone')
+        updateData.phone = formatPhone(editableForm.value.phone)
+    }
+    await userStore.updateUserData(updateData)
+    ElMessage.success(
+      `${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`,
+    )
+  } catch (e) {
+    ElMessage.error(
+      'Update failed: ' + (e instanceof Error ? e.message : 'Unknown error'),
+    )
+  } finally {
+    loading.value = false
+  }
+}
+
+function toggleEdit(field: 'name' | 'email' | 'phone' | 'address') {
+  switch (field) {
+    case 'name':
+      if (isEditingName.value) saveField('name')
+      isEditingName.value = !isEditingName.value
+      break
+    case 'email':
+      if (isEditingEmail.value) saveField('email')
+      isEditingEmail.value = !isEditingEmail.value
+      break
+    case 'phone':
+      if (isEditingPhone.value) saveField('phone')
+      isEditingPhone.value = !isEditingPhone.value
+      break
+    case 'address':
+      if (isEditingAddress.value) saveField('address')
+      isEditingAddress.value = !isEditingAddress.value
+      break
+  }
 }
 </script>
 
 <template>
   <div class="profile-container">
-    <div class="user-profile">
-      <span class="title">User Profile</span>
-      <el-button type="primary" @click="toggleEdit">
-        {{ isEditing ? 'Save' : 'Edit' }}
-      </el-button>
-    </div>
+    <div class="profile-section">
+      <h2>User Profile</h2>
 
-    <div class="description-columns">
-      <!-- Left Column -->
-      <el-descriptions :column="1" direction="vertical">
-        <el-descriptions-item label="Name">
-          <template #label>
-            <div class="cell-item">
-              <el-icon><User /></el-icon>
-              Name
-            </div>
-          </template>
-          <template v-if="isEditing">
-            <el-input v-model="editableForm.name" />
-          </template>
-          <template v-else>
-            {{ editableForm.name || 'N/A' }}
-          </template>
-        </el-descriptions-item>
+      <!-- Name -->
+      <div class="field-group">
+        <label class="label-with-icon">
+          <el-icon><User /></el-icon>
+          Name
+          <div class="edit-toggle" @click="toggleEdit('name')">
+            <el-icon :style="{ color: isEditingName ? 'green' : '' }">
+              <component :is="isEditingName ? Check : Edit" />
+            </el-icon>
+            <span :style="{ color: isEditingName ? 'green' : '#3b2a22' }">
+              {{ isEditingName ? 'Save' : 'Edit' }}
+            </span>
+          </div>
+        </label>
+        <div v-if="!isEditingName" class="readonly-text">
+          {{ editableForm.name || 'N/A' }}
+        </div>
+        <el-input
+          v-else
+          v-model="editableForm.name"
+          @blur="blurFormatField('name')"
+          placeholder="Enter your name"
+        />
+      </div>
 
-        <el-descriptions-item label="Address">
-          <template #label>
-            <div class="cell-item">
-              <el-icon><Location /></el-icon>
-              Address
-            </div>
-          </template>
-          <template v-if="isEditing">
-            <el-input v-model="editableForm.address" />
-          </template>
-          <template v-else>
-            <div class="wrapped-text">
-              {{ editableForm.address || 'N/A' }}
-            </div>
-          </template>
-        </el-descriptions-item>
-      </el-descriptions>
+      <!-- Email -->
+      <div class="field-group">
+        <label class="label-with-icon">
+          <el-icon><Message /></el-icon>
+          Email
+          <div class="edit-toggle" @click="toggleEdit('email')">
+            <el-icon :style="{ color: isEditingEmail ? 'green' : '' }">
+              <component :is="isEditingEmail ? Check : Edit" />
+            </el-icon>
+            <span :style="{ color: isEditingEmail ? 'green' : '#3b2a22' }">
+              {{ isEditingEmail ? 'Save' : 'Edit' }}
+            </span>
+          </div>
+        </label>
+        <div v-if="!isEditingEmail" class="readonly-text">
+          {{ editableForm.email || 'N/A' }}
+        </div>
+        <el-input
+          v-else
+          v-model="editableForm.email"
+          @blur="blurFormatField('email')"
+          placeholder="Enter your email"
+        />
+      </div>
 
-      <!-- Right Column -->
-      <el-descriptions :column="1" direction="vertical">
-        <el-descriptions-item label="Email">
-          <template #label>
-            <div class="cell-item">
-              <el-icon><Message /></el-icon>
-              Email
-            </div>
-          </template>
-          <template v-if="isEditing">
-            <el-input v-model="editableForm.email" />
-          </template>
-          <template v-else>
-            {{ editableForm.email || 'N/A' }}
-          </template>
-        </el-descriptions-item>
+      <!-- Phone -->
+      <div class="field-group">
+        <label class="label-with-icon">
+          <el-icon><Iphone /></el-icon>
+          Phone
+          <div class="edit-toggle" @click="toggleEdit('phone')">
+            <el-icon :style="{ color: isEditingPhone ? 'green' : '' }">
+              <component :is="isEditingPhone ? Check : Edit" />
+            </el-icon>
+            <span :style="{ color: isEditingPhone ? 'green' : '#3b2a22' }">
+              {{ isEditingPhone ? 'Save' : 'Edit' }}
+            </span>
+          </div>
+        </label>
+        <div v-if="!isEditingPhone" class="readonly-text">
+          {{ editableForm.phone || 'N/A' }}
+        </div>
+        <el-input
+          v-else
+          v-model="editableForm.phone"
+          placeholder="Enter phone number"
+          @blur="blurFormatField('phone')"
+          class="full-width-phone"
+        >
+          <template #prepend>+63</template>
+        </el-input>
+      </div>
 
-        <el-descriptions-item label="Phone">
-          <template #label>
-            <div class="cell-item">
-              <el-icon><Iphone /></el-icon>
-              Phone
-            </div>
-          </template>
-          <template v-if="isEditing">
-            <el-input v-model="editableForm.phone" />
-          </template>
-          <template v-else>
-            {{ editableForm.phone || 'N/A' }}
-          </template>
-        </el-descriptions-item>
-      </el-descriptions>
+      <!-- Address -->
+      <div class="field-group">
+        <label class="label-with-icon">
+          <el-icon><Location /></el-icon>
+          Address
+          <div class="edit-toggle" @click="toggleEdit('address')">
+            <el-icon :style="{ color: isEditingAddress ? 'green' : '' }">
+              <component :is="isEditingAddress ? Check : Edit" />
+            </el-icon>
+            <span :style="{ color: isEditingAddress ? 'green' : '#3b2a22' }">
+              {{ isEditingAddress ? 'Save' : 'Edit' }}
+            </span>
+          </div>
+        </label>
+        <div v-if="!isEditingAddress" class="readonly-text">
+          {{ getFullAddress() || 'N/A' }}
+        </div>
+
+        <div v-else>
+          <div class="address-select-group">
+            <el-select
+              v-model="editableForm.address.province"
+              placeholder="Select province"
+              clearable
+              class="address-select"
+            >
+              <el-option
+                v-for="prov in provinces"
+                :key="prov"
+                :label="prov"
+                :value="prov"
+              />
+            </el-select>
+
+            <el-select
+              v-if="cities.length"
+              v-model="editableForm.address.city"
+              placeholder="Select city"
+              clearable
+              class="address-select"
+            >
+              <el-option
+                v-for="city in cities"
+                :key="city"
+                :label="city"
+                :value="city"
+              />
+            </el-select>
+          </div>
+
+          <el-input
+            v-model="editableForm.address.home"
+            placeholder="House / Unit"
+            class="address-input"
+          />
+
+          <el-input
+            v-model="editableForm.address.postalCode"
+            placeholder="Postal Code"
+            maxlength="4"
+            class="address-postal"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .profile-container {
-  width: 85vw;
+  max-width: 600px;
   margin: 2rem auto;
+  padding: 16px 20px;
 }
 
-.description-columns {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  width: 100%;
-  gap: 40px;
+.profile-section h2 {
+  font-weight: 700;
+  color: #3b2a22;
+  margin-bottom: 1.5rem;
 }
 
-.user-profile {
+.field-group {
+  margin-bottom: 2rem;
+}
+
+.label-with-icon {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.title {
-  font-size: 18px;
+  gap: 8px;
   font-weight: 600;
+  color: #3b2a22;
+  margin-bottom: 0.5rem;
+  user-select: none;
 }
 
-.description-columns {
+.edit-toggle {
+  margin-left: auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: 40px;
-}
-
-.cell-item {
-  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  line-height: 1.2;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #3b2a22;
+  user-select: none;
 }
 
-.wrapped-text {
-  word-break: break-word;
-  white-space: pre-line;
+.edit-toggle:hover {
+  opacity: 0.8;
 }
 
-.description-columns ::v-deep(.el-descriptions) {
-  flex: 1;
-  min-width: 300px;
+.readonly-text {
+  color: #bba68b;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 4px;
+
+  min-height: 2.5em;
+  white-space: pre-wrap;
 }
 
-.description-columns ::v-deep(.el-descriptions__label),
-.description-columns ::v-deep(.el-descriptions__content) {
-  vertical-align: top;
+.full-width-phone ::v-deep(.el-input__wrapper) {
+  width: 100%;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.address-select-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.address-input,
+.address-postal {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.el-input__inner,
+.el-select .el-input__inner {
+  padding: 8px 12px;
+  font-size: 14px;
 }
 </style>

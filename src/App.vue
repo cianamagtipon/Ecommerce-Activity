@@ -2,40 +2,36 @@
 import Header from './components/Header.vue'
 import Menu from './components/Menu.vue'
 import Login from './components/auth/Login.vue'
-import Register from './components/auth/Register.vue'
 import Footer from './components/Footer.vue'
 
 import { ref, onBeforeMount, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
 import { storeToRefs } from 'pinia'
 
 const userStore = useUserStore()
 const cartStore = useCartStore()
+const router = useRouter()
 
 const { isLoggedIn, name } = storeToRefs(userStore)
 const loginJustSucceeded = ref(false)
-const registerJustSucceeded = ref(false)
 
 const showLogin = ref(false)
-const showRegister = ref(false)
 
 function openLogin() {
   showLogin.value = true
 }
 
 function openRegister() {
-  showRegister.value = true
+  router.push('/register') // redirect to Register view
 }
 
-function handleDialogClosed(flag: 'login' | 'register') {
-  const successRef =
-    flag === 'login' ? loginJustSucceeded : registerJustSucceeded
-  if (successRef.value) {
+function handleDialogClosed() {
+  if (loginJustSucceeded.value) {
     userStore.loadUserFromStorage()
     cartStore.loadCartFromStorage()
-    successRef.value = false
+    loginJustSucceeded.value = false
   }
 }
 
@@ -62,13 +58,13 @@ onBeforeMount(async () => {
             @login-clicked="openLogin"
             @signup-clicked="openRegister"
             @logout-clicked="handleLogout"
-          ></Header>
+          />
         </div>
       </div>
 
       <div class="menu">
         <div class="container">
-          <Menu></Menu>
+          <Menu />
         </div>
       </div>
     </div>
@@ -81,16 +77,11 @@ onBeforeMount(async () => {
       </div>
     </div>
 
+    <!-- Login Modal -->
     <Login
       v-model:dialog-visible="showLogin"
       @login-success="loginJustSucceeded = true"
-      @closed="() => handleDialogClosed('login')"
-    />
-
-    <Register
-      v-model:dialog-visible="showRegister"
-      @register-success="registerJustSucceeded = true"
-      @closed="() => handleDialogClosed('register')"
+      @closed="handleDialogClosed"
     />
   </div>
 </template>

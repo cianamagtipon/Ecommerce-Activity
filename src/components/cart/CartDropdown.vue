@@ -159,7 +159,9 @@ watch(
             </el-button>
           </div>
         </div>
-        <div v-else class="empty-state">Your cart is empty.</div>
+        <div v-else class="empty-state">
+          <el-empty description="Your cart is empty." />
+        </div>
       </el-dropdown-menu>
     </template>
   </el-dropdown>

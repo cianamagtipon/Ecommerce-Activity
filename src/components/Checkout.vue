@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Edit, Check } from '@element-plus/icons-vue'
+import {
+  User,
+  Message,
+  Iphone,
+  Location,
+  Edit,
+  Check,
+} from '@element-plus/icons-vue'
 
 import { useUserStore } from '@/pinia/user'
 import { useCheckoutStore } from '@/pinia/checkout'
 import { useCartStore } from '@/pinia/cart'
 import { useOrderStore } from '@/pinia/orders'
 import type { FormInstance } from 'element-plus'
+
 import OrderSummary from './OrderSummary.vue'
+
+import { useValidationRules } from '@/composables/validationRules'
+import { useFormatter } from '@/composables/formatter'
+import { useLocationSearch } from '@/composables/locationSearch'
 
 const userStore = useUserStore()
 const checkoutStore = useCheckoutStore()
@@ -17,8 +29,19 @@ const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const router = useRouter()
 
+const { required, emailRule, phoneRule, postalCodeRule } = useValidationRules()
+const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail } =
+  useFormatter()
+const { findCityByZipPrefix, getCitiesByProvince, getAllProvinces } =
+  useLocationSearch()
+
+const provinces = getAllProvinces()
+const cities = ref<string[]>([])
+const isAutofillingFromZip = ref(false)
+
 const isEditingPhone = ref(false)
 const isEditingAddress = ref(false)
+const loading = ref(false)
 
 const formRef = ref<FormInstance>()
 
@@ -26,35 +49,123 @@ const editableForm = ref({
   name: userStore.name,
   email: userStore.email,
   phone: userStore.phone,
-  address: userStore.address,
+  address: {
+    province: userStore.address?.province ?? '',
+    city: userStore.address?.city ?? '',
+    home: userStore.address?.home ?? '',
+    postalCode: userStore.address?.zip ?? '',
+  },
   notes: '',
 })
 
-const rules = {
-  name: [{ required: true, message: 'Name is required', trigger: 'blur' }],
-  email: [{ required: true, message: 'Email is required', trigger: 'blur' }],
-  address: [
-    { required: true, message: 'Address is required', trigger: 'blur' },
+watch(
+  () => editableForm.value.address.province,
+  (newProvince) => {
+    cities.value = getCitiesByProvince(newProvince)
+    if (!isAutofillingFromZip.value) {
+      editableForm.value.address.city = ''
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => editableForm.value.address.postalCode,
+  (zip) => {
+    const cleanedZip = removeAllSpaces(zip)
+    const match = findCityByZipPrefix(cleanedZip)
+    if (match) {
+      isAutofillingFromZip.value = true
+      editableForm.value.address.province = match.province
+      cities.value = getCitiesByProvince(match.province)
+      editableForm.value.address.city = match.city
+      setTimeout(() => {
+        isAutofillingFromZip.value = false
+      }, 0)
+    }
+  },
+)
+
+watch(
+  [
+    () => editableForm.value.address.province,
+    () => editableForm.value.address.city,
   ],
+  ([newProvince, newCity]) => {
+    if (!newProvince && !newCity && editableForm.value.address.postalCode) {
+      editableForm.value.address.postalCode = ''
+    }
+  },
+)
+
+function blurFormatField(fieldPath: string) {
+  const segments = fieldPath.split('.')
+  let target: any = editableForm.value
+  for (let i = 0; i < segments.length - 1; i++) {
+    target = target[segments[i]]
+  }
+  const key = segments[segments.length - 1]
+  if (typeof target[key] === 'string') {
+    let val = target[key]
+    switch (key) {
+      case 'email':
+        val = formatEmail(val)
+        break
+      case 'phone':
+        val = formatPhone(val)
+        break
+      case 'postalCode':
+        val = removeAllSpaces(val)
+        break
+      default:
+        val = cleanSpaces(val)
+    }
+    target[key] = val
+  }
 }
 
-onMounted(() => {
-  if (checkoutStore.selectedItems.length === 0) {
-    const savedOrder = localStorage.getItem('currentOrder')
-    if (savedOrder) {
-      const parsedItems = JSON.parse(savedOrder)
-      checkoutStore.setSelectedItems(parsedItems)
-    } else {
-    }
+function getFullAddress() {
+  const a = editableForm.value.address
+  return [a.home, a.city, a.province, a.postalCode].filter(Boolean).join(', ')
+}
+
+async function saveField(field: 'phone' | 'address') {
+  loading.value = true
+  try {
+    const updateData =
+      field === 'phone'
+        ? { phone: formatPhone(cleanSpaces(editableForm.value.phone)) }
+        : { address: { ...editableForm.value.address } }
+
+    await userStore.updateUserData(updateData)
+    ElMessage.success(
+      `${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`,
+    )
+  } catch (e) {
+    ElMessage.error(
+      'Update failed: ' + (e instanceof Error ? e.message : 'Unknown error'),
+    )
+  } finally {
+    loading.value = false
   }
-})
+}
+
+function toggleEdit(field: 'phone' | 'address') {
+  if (field === 'phone') {
+    if (isEditingPhone.value) saveField('phone')
+    isEditingPhone.value = !isEditingPhone.value
+  } else if (field === 'address') {
+    if (isEditingAddress.value) saveField('address')
+    isEditingAddress.value = !isEditingAddress.value
+  }
+}
 
 const selectedItems = computed(() => checkoutStore.selectedItems)
 
 function placeOrder() {
   formRef.value?.validate((valid) => {
     if (!valid) {
-      ElMessage.error('Name and address are required to place an order.')
+      ElMessage.error('You must have a mailing address to place an order.')
       return
     }
 
@@ -62,7 +173,7 @@ function placeOrder() {
       name: editableForm.value.name,
       email: editableForm.value.email,
       phone: editableForm.value.phone,
-      address: editableForm.value.address,
+      address: { ...editableForm.value.address },
     })
 
     orderStore.placeOrder(selectedItems.value, userStore.email)
@@ -70,7 +181,6 @@ function placeOrder() {
     cartStore.selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
     cartStore.selectedISBNs.clear()
     cartStore.saveCartToStorage()
-
     cartStore.clearSelected()
     checkoutStore.clearSelectedItems()
 
@@ -79,19 +189,15 @@ function placeOrder() {
   })
 }
 
-function togglePhoneEdit() {
-  if (isEditingPhone.value) {
-    userStore.updateUserData({ phone: editableForm.value.phone })
+onMounted(() => {
+  if (checkoutStore.selectedItems.length === 0) {
+    const savedOrder = localStorage.getItem('currentOrder')
+    if (savedOrder) {
+      const parsedItems = JSON.parse(savedOrder)
+      checkoutStore.setSelectedItems(parsedItems)
+    }
   }
-  isEditingPhone.value = !isEditingPhone.value
-}
-
-function toggleAddressEdit() {
-  if (isEditingAddress.value) {
-    userStore.updateUserData({ address: editableForm.value.address })
-  }
-  isEditingAddress.value = !isEditingAddress.value
-}
+})
 
 onBeforeRouteLeave(() => {
   checkoutStore.clearSelectedItems()
@@ -108,49 +214,60 @@ onBeforeRouteLeave(() => {
       <el-form
         ref="formRef"
         :model="editableForm"
-        :rules="rules"
         label-position="top"
         hide-required-asterisk
+        :rules="{
+          'address.province': [required],
+          'address.city': [required],
+          'address.home': [required],
+          'address.postalCode': [required, postalCodeRule],
+          phone: [phoneRule],
+        }"
       >
         <div class="form-section">
           <h3>Personal Information</h3>
 
-          <el-form-item prop="name">
-            <template #label>
-              <span class="form-label">Name</span>
-            </template>
-            <div class="readonly-text">{{ editableForm.name || 'N/A' }}</div>
-          </el-form-item>
+          <!-- Name (read-only) -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="label">
+                <span>Name</span>
+              </label>
+              <!-- No edit button for name -->
+            </div>
+            <div class="readonly-text">
+              {{ editableForm.name || 'N/A' }}
+            </div>
+          </div>
 
-          <el-form-item prop="email">
-            <template #label>
-              <span class="form-label">Email</span>
-            </template>
-            <div class="readonly-text">{{ editableForm.email || 'N/A' }}</div>
-          </el-form-item>
+          <!-- Email (read-only) -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="label">
+                <span>Email</span>
+              </label>
+              <!-- No edit button for email -->
+            </div>
+            <div class="readonly-text">
+              {{ editableForm.email || 'N/A' }}
+            </div>
+          </div>
 
-          <el-form-item>
-            <template #label>
-              <div class="label-with-icon">
+          <!-- Phone (editable) -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="label">
                 <span>Phone</span>
-                <div class="edit-icon" @click="togglePhoneEdit">
-                  <el-icon
-                    :style="{
-                      fontSize: '16px',
-                      color: isEditingPhone ? 'green' : '',
-                    }"
-                  >
-                    <component :is="isEditingPhone ? Check : Edit" />
-                  </el-icon>
-                  <span
-                    class="edit-text"
-                    :style="{ color: isEditingPhone ? 'green' : '#3b2a22' }"
-                  >
-                    {{ isEditingPhone ? 'Save' : 'Edit' }}
-                  </span>
-                </div>
+              </label>
+              <div class="edit-toggle-right" @click="toggleEdit('phone')">
+                <el-icon :style="{ color: isEditingPhone ? 'green' : '' }">
+                  <component :is="isEditingPhone ? Check : Edit" />
+                </el-icon>
+                <span :style="{ color: isEditingPhone ? 'green' : '#3b2a22' }">
+                  {{ isEditingPhone ? 'Save' : 'Edit' }}
+                </span>
               </div>
-            </template>
+            </div>
 
             <template v-if="!isEditingPhone">
               <div class="readonly-text">{{ editableForm.phone || 'N/A' }}</div>
@@ -158,68 +275,94 @@ onBeforeRouteLeave(() => {
             <template v-else>
               <el-input
                 v-model="editableForm.phone"
+                @blur="blurFormatField('phone')"
                 placeholder="Enter phone number"
-                class="editable-field full-width-phone"
+                class="full-width-phone"
               >
                 <template #prepend>+63</template>
               </el-input>
             </template>
-          </el-form-item>
+          </div>
 
           <h3>Shipping Address</h3>
-          <el-form-item prop="address">
-            <template #label>
-              <div class="label-with-icon">
-                <span>
-                  Address<span style="color: #d52128; margin-left: 5px">*</span>
+          <!-- Address (editable) -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="label">
+                <span>Address</span>
+              </label>
+              <div class="edit-toggle-right" @click="toggleEdit('address')">
+                <el-icon :style="{ color: isEditingAddress ? 'green' : '' }">
+                  <component :is="isEditingAddress ? Check : Edit" />
+                </el-icon>
+                <span
+                  :style="{ color: isEditingAddress ? 'green' : '#3b2a22' }"
+                >
+                  {{ isEditingAddress ? 'Save' : 'Edit' }}
                 </span>
-                <div class="edit-icon" @click="toggleAddressEdit">
-                  <el-icon
-                    :style="{
-                      fontSize: '16px',
-                      color: isEditingAddress ? 'green' : '',
-                    }"
-                  >
-                    <component :is="isEditingAddress ? Check : Edit" />
-                  </el-icon>
-                  <span
-                    class="edit-text"
-                    :style="{ color: isEditingAddress ? 'green' : '#3b2a22' }"
-                  >
-                    {{ isEditingAddress ? 'Save' : 'Edit' }}
-                  </span>
-                </div>
               </div>
-            </template>
+            </div>
 
-            <template v-if="!isEditingAddress">
-              <div class="readonly-text">
-                {{ editableForm.address || 'N/A' }}
+            <div v-if="!isEditingAddress" class="readonly-text">
+              {{ getFullAddress() || 'N/A' }}
+            </div>
+
+            <div v-else>
+              <div class="address-select-group">
+                <el-select
+                  v-model="editableForm.address.province"
+                  placeholder="Select province"
+                  clearable
+                  class="address-select"
+                >
+                  <el-option
+                    v-for="prov in provinces"
+                    :key="prov"
+                    :label="prov"
+                    :value="prov"
+                  />
+                </el-select>
+
+                <el-select
+                  v-if="cities.length"
+                  v-model="editableForm.address.city"
+                  placeholder="Select city"
+                  clearable
+                  class="address-select"
+                >
+                  <el-option
+                    v-for="city in cities"
+                    :key="city"
+                    :label="city"
+                    :value="city"
+                  />
+                </el-select>
               </div>
-            </template>
-            <template v-else>
+
               <el-input
-                v-model="editableForm.address"
-                type="textarea"
-                placeholder="Enter shipping address"
-                class="editable-field full-width-address"
+                v-model="editableForm.address.home"
+                placeholder="House / Unit"
+                class="address-input"
               />
-            </template>
-          </el-form-item>
-        </div>
 
-        <div class="form-section">
-          <h3>Additional Notes</h3>
-          <el-form-item>
-            <template #label>
-              <span class="form-label">Notes</span>
-            </template>
+              <el-input
+                v-model="editableForm.address.postalCode"
+                placeholder="Postal Code"
+                maxlength="4"
+                @blur="blurFormatField('address.postalCode')"
+                class="address-postal"
+              />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Additional Notes</h3>
             <el-input
               v-model="editableForm.notes"
               type="textarea"
               placeholder="Optional instructions or requests..."
             />
-          </el-form-item>
+          </div>
         </div>
       </el-form>
     </div>
@@ -266,9 +409,9 @@ onBeforeRouteLeave(() => {
 .readonly-text {
   color: #bba68b;
   font-size: 14px;
-  padding: 4px 0;
-  width: 100%;
-  min-height: 3em;
+  padding: 3px 0px;
+  border-radius: 4px;
+  min-height: 2.5em;
   white-space: pre-wrap;
 }
 
@@ -283,40 +426,56 @@ onBeforeRouteLeave(() => {
   color: #3b2a22;
 }
 
-.label-with-icon {
-  display: flex;
+.field-group {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
   color: #3b2a22;
 }
 
-.edit-icon {
+/* New: header row puts the edit button on the right */
+.field-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  cursor: pointer;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.edit-toggle-right {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
   font-weight: 500;
   color: #3b2a22;
+  user-select: none;
 }
 
-.edit-icon:hover {
-  opacity: 0.8;
-}
-
-.edit-text {
-  font-size: 13px;
-}
-
-.full-width-address ::v-deep(.el-textarea__inner) {
-  width: 100%;
-  min-height: 3em;
-  font-size: 14px;
-  color: #3b2a22; /* dark brown */
+.edit-toggle-right:hover {
+  opacity: 0.85;
 }
 
 .full-width-phone ::v-deep(.el-input__wrapper) {
+  width: 100%;
+}
+
+.address-select-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.address-input,
+.address-postal {
+  margin-top: 0.75rem;
   width: 100%;
 }
 
@@ -328,6 +487,8 @@ onBeforeRouteLeave(() => {
   .checkout {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    padding: 1rem;
   }
 
   .checkout-form,
@@ -337,6 +498,11 @@ onBeforeRouteLeave(() => {
 
   .checkout-summary {
     order: 3;
+  }
+
+  .address-select-group {
+    flex-direction: column;
+    gap: 0.75rem;
   }
 }
 </style>

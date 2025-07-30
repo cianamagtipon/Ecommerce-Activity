@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { useUserStore } from '@/pinia/user'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
 const { isLoggedIn } = storeToRefs(userStore)
+const router = useRouter()
 
-const emit = defineEmits(['login-clicked', 'logout-clicked', 'signup-clicked'])
+const emit = defineEmits(['login-clicked', 'logout-clicked'])
+
+// Sign up button now directly routes
+function goToRegister() {
+  router.push('/registration')
+}
 </script>
 
 <template>
@@ -27,7 +34,7 @@ const emit = defineEmits(['login-clicked', 'logout-clicked', 'signup-clicked'])
           v-if="!isLoggedIn"
           class="signup-button"
           round
-          @click="emit('signup-clicked')"
+          @click="goToRegister"
         >
           Sign up for free
         </el-button>

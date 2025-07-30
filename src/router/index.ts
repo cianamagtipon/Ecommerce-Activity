@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/components/views/HomeView.vue'
+import Register from '@/components/auth/Register.vue'
 import Profile from '@/components/Profile.vue'
 import StoreView from '../components/views/StoreView.vue'
 import ProductView from '@/components/views/ProductView.vue'
@@ -21,8 +22,13 @@ const router = createRouter({
       redirect: '/home',
     },
     {
+      path: '/registration',
+      name: 'register',
+      component: Register,
+    },
+    {
       path: '/profile',
-      name: 'Profile',
+      name: 'profile',
       component: Profile,
       meta: { requiresAuth: true },
     },
