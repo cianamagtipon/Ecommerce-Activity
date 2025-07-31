@@ -100,7 +100,9 @@ export const useCartStore = defineStore('cart', {
 
     saveCartToStorage() {
       const userStore = useUserStore()
-      const key = `cart-${userStore.currentUser?.email || 'guest'}`
+      if (!userStore.currentUser) return // don't persist for guests
+
+      const key = `cart-${userStore.currentUser.email}`
       const plainData = {
         items: this.items,
         selectedISBNs: Array.from(this.selectedISBNs),
@@ -110,9 +112,12 @@ export const useCartStore = defineStore('cart', {
 
     loadCartFromStorage() {
       const userStore = useUserStore()
-      const key = `cart-${userStore.currentUser?.email || 'guest'}`
+      if (!userStore.currentUser) return // don't load for guests
+
+      const key = `cart-${userStore.currentUser.email}`
       const raw = localStorage.getItem(key)
       if (!raw) return
+
       try {
         const parsed = JSON.parse(raw)
         this.items = parsed.items || []

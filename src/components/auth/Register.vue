@@ -172,30 +172,38 @@ function getFullAddress() {
 
 async function handleRegister() {
   console.log('[handleRegister] clicked')
+  loading.value = true
 
-  const success = userStore.register({
-    name: form.value.name,
-    email: form.value.email,
-    password: form.value.password,
-    phone: form.value.phone,
-    address: {
-      province: form.value.address.province,
-      city: form.value.address.city,
-      zip: form.value.address.postalCode,
-      home: form.value.address.home,
-    },
-    userOrders: [],
-  })
+  try {
+    const success = await userStore.register({
+      name: form.value.name,
+      email: form.value.email,
+      password: form.value.password,
+      phone: form.value.phone,
+      address: {
+        province: form.value.address.province,
+        city: form.value.address.city,
+        zip: form.value.address.postalCode,
+        home: form.value.address.home,
+      },
+      userOrders: [],
+    })
 
-  console.log('[handleRegister] success?', success)
+    console.log('[handleRegister] success?', success)
 
-  if (!success) {
-    ElMessage.error('Account already exists.')
-    return
+    if (!success) {
+      ElMessage.error('Account already exists.')
+      return
+    }
+
+    ElMessage.success('Registration successful!')
+    router.push('/home')
+  } catch (err) {
+    console.error('[handleRegister] error:', err)
+    ElMessage.error('Something went wrong.')
+  } finally {
+    loading.value = false
   }
-
-  ElMessage.success('Registration successful!')
-  router.push('/home')
 }
 </script>
 
@@ -212,15 +220,28 @@ async function handleRegister() {
         class="register-form"
       >
         <el-form-item label="Name" prop="name">
-          <el-input v-model="form.name" @blur="blurFormatField('name')" />
+          <el-input
+            v-model="form.name"
+            @blur="blurFormatField('name')"
+            @keydown.enter.prevent="handleRegister"
+          />
         </el-form-item>
 
         <el-form-item label="Email" prop="email">
-          <el-input v-model="form.email" @blur="blurFormatField('email')" />
+          <el-input
+            v-model="form.email"
+            @blur="blurFormatField('email')"
+            @keydown.enter.prevent="handleRegister"
+          />
         </el-form-item>
 
         <el-form-item label="Password" prop="password">
-          <el-input v-model="form.password" type="password" show-password />
+          <el-input
+            v-model="form.password"
+            type="password"
+            show-password
+            @keydown.enter.prevent="handleRegister"
+          />
         </el-form-item>
 
         <el-form-item label="Confirm Password" prop="confirmPassword">
@@ -228,6 +249,7 @@ async function handleRegister() {
             v-model="form.confirmPassword"
             type="password"
             show-password
+            @keydown.enter.prevent="handleRegister"
           />
         </el-form-item>
 
@@ -244,7 +266,14 @@ async function handleRegister() {
         <el-collapse v-model="activeCollapseNames">
           <el-collapse-item title="Contact & Address" name="contact">
             <el-form-item label="Phone" prop="phone">
-              <el-input v-model="form.phone" @blur="blurFormatField('phone')" />
+              <el-input
+                v-model="form.phone"
+                placeholder="Enter phone number"
+                @blur="blurFormatField('phone')"
+                @keydown.enter.prevent="handleRegister"
+              >
+                <template #prepend>+63</template>
+              </el-input>
             </el-form-item>
 
             <el-form-item label="Province" prop="address.province">
@@ -284,6 +313,15 @@ async function handleRegister() {
               </el-select>
             </el-form-item>
 
+            <el-form-item label="House / Unit" prop="address.home">
+              <el-input
+                v-model="form.address.home"
+                placeholder="Enter house or unit number"
+                @blur="blurFormatField('address.home')"
+                @keydown.enter.prevent="handleRegister"
+              />
+            </el-form-item>
+
             <el-form-item label="Postal Code" prop="address.postalCode">
               <el-autocomplete
                 v-model="form.address.postalCode"
@@ -295,14 +333,7 @@ async function handleRegister() {
                 @select="handleZipSelect"
                 @blur="blurFormatField('address.postalCode')"
                 class="w-full"
-              />
-            </el-form-item>
-
-            <el-form-item label="House / Unit" prop="address.home">
-              <el-input
-                v-model="form.address.home"
-                placeholder="Enter house or unit number"
-                @blur="blurFormatField('address.home')"
+                @keydown.enter.prevent="handleRegister"
               />
             </el-form-item>
           </el-collapse-item>
@@ -311,9 +342,9 @@ async function handleRegister() {
         <div class="form-footer">
           <el-button
             type="primary"
+            native-type="submit"
             class="register-btn"
             :loading="loading"
-            @click="handleRegister"
           >
             Register
           </el-button>

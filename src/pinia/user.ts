@@ -2,7 +2,12 @@ import { defineStore } from 'pinia'
 import type { User } from '@/types/user'
 
 function getStoredUsers(): User[] {
-  return JSON.parse(localStorage.getItem('Users') || '[]') as User[]
+  try {
+    return JSON.parse(localStorage.getItem('Users') || '[]') as User[]
+  } catch (e) {
+    console.warn('Failed to parse stored users:', e)
+    return []
+  }
 }
 
 function setStoredUsers(users: User[]) {
@@ -19,7 +24,6 @@ export const useUserStore = defineStore('user', {
     name: (state): string => state.currentUser?.name ?? '',
     email: (state): string => state.currentUser?.email ?? '',
     phone: (state): string => state.currentUser?.phone ?? '',
-
     address: (state): User['address'] =>
       state.currentUser?.address ?? undefined,
 
@@ -43,13 +47,12 @@ export const useUserStore = defineStore('user', {
       )
 
       if (user) {
-        // convert legacy string address to object if needed
         if (typeof user.address === 'string') {
           user.address = { home: user.address }
         }
 
         this.currentUser = user
-        localStorage.setItem('currentUser', user.email)
+        localStorage.setItem('CurrentUser', JSON.stringify(user))
         return true
       }
 
@@ -67,40 +70,41 @@ export const useUserStore = defineStore('user', {
 
       user.email = normalizedEmail
 
-      // if address is missing or a string, convert it
       if (typeof user.address === 'string') {
         user.address = { home: user.address }
       }
 
       users.push(user)
       setStoredUsers(users)
-      localStorage.setItem('currentUser', user.email)
 
+      localStorage.setItem('CurrentUser', JSON.stringify(user))
       this.currentUser = user
       return true
     },
 
     logout() {
       this.currentUser = null
-      localStorage.removeItem('currentUser')
+      localStorage.removeItem('CurrentUser')
+      console.info('[UserStore] Logged out successfully.')
     },
 
     loadUserFromStorage() {
       const stored = localStorage.getItem('CurrentUser')
       if (stored) {
-        const user = JSON.parse(stored) as User
-
-        // convert legacy string address
-        if (typeof user.address === 'string') {
-          user.address = { home: user.address }
+        try {
+          const user = JSON.parse(stored) as User
+          if (typeof user.address === 'string') {
+            user.address = { home: user.address }
+          }
+          this.currentUser = user
+        } catch (e) {
+          console.warn('Failed to load user from storage:', e)
         }
-
-        this.currentUser = user
       }
     },
 
     updateUserData(updateData: Partial<User>) {
-      const users = JSON.parse(localStorage.getItem('Users') || '[]')
+      const users = getStoredUsers()
       const idx = users.findIndex(
         (u: User) => u.email === this.currentUser?.email,
       )
@@ -120,7 +124,7 @@ export const useUserStore = defineStore('user', {
         }
 
         this.currentUser = users[idx]
-        localStorage.setItem('Users', JSON.stringify(users))
+        setStoredUsers(users)
         localStorage.setItem('CurrentUser', JSON.stringify(this.currentUser))
       }
     },

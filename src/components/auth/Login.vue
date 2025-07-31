@@ -94,7 +94,11 @@ function goToRegister() {
     @close="closeDialog"
   >
     <div class="login-content">
-      <h2 class="dialog-title">Welcome Back</h2>
+      <h2 class="dialog-title">Log In</h2>
+      <p class="login-note">
+        Log in to save your cart, buy your favorites, and enjoy a personalized
+        experience.
+      </p>
 
       <el-form
         ref="loginFormRef"
@@ -104,8 +108,7 @@ function goToRegister() {
           password: passwordRule,
         }"
         label-position="top"
-        @keyup.enter="handleLogin"
-        class="login-form-no-labels"
+        class="login-form"
       >
         <el-form-item prop="email">
           <el-input
@@ -114,6 +117,7 @@ function goToRegister() {
             size="large"
             placeholder="Email"
             clearable
+            @keydown.enter.prevent="handleLogin"
           >
             <template #prefix>
               <el-icon>
@@ -132,6 +136,7 @@ function goToRegister() {
             size="large"
             placeholder="Password"
             clearable
+            @keydown.enter.prevent="handleLogin"
           >
             <template #prefix>
               <el-icon>
@@ -169,6 +174,15 @@ function goToRegister() {
 <style scoped>
 .login-dialog {
   border-radius: 20px;
+}
+
+.login-note {
+  margin-top: -1rem;
+  margin-bottom: 2.5rem;
+  font-size: 14px;
+  color: #6c584c;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .login-content {
@@ -226,7 +240,7 @@ function goToRegister() {
 }
 
 .signup-prompt {
-  margin-top: 2rem;
+  margin-top: 2.5rem;
   margin-bottom: 15px;
   text-align: center;
   font-size: 13px;

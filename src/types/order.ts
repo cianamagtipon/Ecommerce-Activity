@@ -13,4 +13,5 @@ export type Order = {
   items: OrderItem[]
   total: number
   status: OrderStatus
+  notes?: string
 }

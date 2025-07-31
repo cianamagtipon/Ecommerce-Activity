@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+
 import { useCartStore } from '@/pinia/cart'
+import { useCheckoutStore } from '@/pinia/checkout'
+import { useUserStore } from '@/pinia/user'
+
 import { ShoppingCart, Delete } from '@element-plus/icons-vue'
 
 const cartStore = useCartStore()
+const checkoutStore = useCheckoutStore()
+const userStore = useUserStore()
+
 const router = useRouter()
 const route = useRoute()
 
@@ -29,7 +36,6 @@ function removeItem(isbn: string) {
 function loadProductData() {
   const genre = route.params.genre as string
   const id = route.params.id as string
-
   console.log('Fetching product', genre, id)
 }
 
@@ -43,17 +49,36 @@ const subtotal = computed(() =>
 )
 
 function handleCheckout() {
-  // Save current cart items for checkout
-  localStorage.setItem('currentOrder', JSON.stringify(cartStore.items))
+  const selectedItems = [...cartStore.items]
+  if (!selectedItems.length) return
+
+  // mark all items as selected
+  const allISBNs = selectedItems.map((item) => item.product.isbn)
+  cartStore.selectedISBNs = new Set(allISBNs)
+
+  checkoutStore.setSelectedItems(selectedItems)
+  localStorage.setItem('currentOrder', JSON.stringify(selectedItems))
+
+  // show modal if not logged in
+  const email = userStore.currentUser?.email
+  if (!email) {
+    window.openLoginModal?.()
+    return
+  }
+
   isDropdownOpen.value = false
   router.push('/checkout')
 }
 
 onMounted(() => {
-  loadProductData()
+  if (!checkoutStore.selectedItems.length) {
+    const raw = localStorage.getItem('currentOrder')
+    if (raw) {
+      checkoutStore.setSelectedItems(JSON.parse(raw))
+    }
+  }
 })
 
-// react to route param changes
 watch(
   () => [route.params.genre, route.params.id],
   () => {
@@ -363,36 +388,6 @@ watch(
   padding-bottom: 10px;
   position: relative;
   z-index: 1;
-}
-
-/* Inner shadows */
-.scrollable-wrapper::before,
-.scrollable-wrapper::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 20px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.scrollable-wrapper::before {
-  top: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(212, 196, 182, 0.2) 0%,
-    transparent 30%
-  );
-}
-
-.scrollable-wrapper::after {
-  bottom: 0;
-  background: linear-gradient(
-    to top,
-    rgba(212, 196, 182, 0.2) 0%,
-    transparent 30%
-  );
 }
 
 /*  scrollbar style lol */

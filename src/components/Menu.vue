@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, Search } from '@element-plus/icons-vue'
 import { TagIcon, ShoppingCartIcon } from '@heroicons/vue/24/solid'
 import { Bars3Icon } from '@heroicons/vue/24/outline'
 import { useScreenSize } from '@/composables/screenSize'
+import { useUserStore } from '@/pinia/user'
 
 import CartDropdown from '@/components/cart/CartDropdown.vue'
+
+const userStore = useUserStore()
+const isLoggedIn = computed(() => !!userStore.currentUser)
 
 const fullscreenLoading = ref(false)
 
@@ -78,7 +82,7 @@ onMounted(syncActiveIndex)
       >
         <el-menu-item index="1-1">Home</el-menu-item>
         <el-menu-item index="1-2">Store</el-menu-item>
-        <el-menu-item index="1-3">Profile</el-menu-item>
+        <el-menu-item index="1-3" v-if="isLoggedIn"> Profile </el-menu-item>
 
         <div class="menu-spacer"></div>
         <div class="cart-menu-wrapper">
@@ -196,9 +200,9 @@ onMounted(syncActiveIndex)
 ::v-deep(.el-menu--horizontal > .el-menu-item::after) {
   content: '';
   position: absolute;
-  bottom: 4px;
+  bottom: 8px;
   left: 25%;
-  width: 50%;
+  width: 55%;
   height: 2px;
   background-color: #5d3d2e;
   transform: scaleX(0);

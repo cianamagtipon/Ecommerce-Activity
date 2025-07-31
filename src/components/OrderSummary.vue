@@ -4,6 +4,15 @@ import type { Product } from '@/types/product'
 import type { FormInstance } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { useCheckoutStore } from '@/pinia/checkout'
+import { useUserStore } from '@/pinia/user'
+import { useRouter, useRoute } from 'vue-router'
+import { useCartStore } from '@/pinia/cart'
+
+const router = useRouter()
+const route = useRoute()
+
+const userStore = useUserStore()
+const cartStore = useCartStore()
 
 const props = defineProps<{
   selectedItems?: { product: Product; quantity: number }[]
@@ -13,6 +22,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'button-click'): void
+  (e: 'login-clicked'): void
 }>()
 
 const checkoutStore = useCheckoutStore()
@@ -43,16 +53,41 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
 }
 
 async function handleCheckout() {
-  if (props.formRef) {
-    try {
-      await props.formRef.validate()
-      emit('button-click')
-    } catch (err) {
-      ElMessage.error('Please complete all required fields.')
-    }
-  } else {
-    emit('button-click')
+  if (!userStore.currentUser) {
+    // trigger login when logged out
+    window.openLoginModal?.()
+    return
   }
+
+  // if in checkout: place order
+  if (route.name === 'checkout') {
+    if (props.formRef) {
+      try {
+        await props.formRef.validate()
+        emit('button-click')
+
+        // clear items when order is placed
+        const selectedISBNs = checkoutStore.selectedItems.map(
+          (item) => item.product.isbn,
+        )
+        selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
+        cartStore.saveCartToStorage()
+
+        // clear checkout state
+        checkoutStore.clearSelectedItems()
+        localStorage.removeItem('currentOrder')
+      } catch (err) {
+        ElMessage.error('Please complete all required fields.')
+      }
+    } else {
+      emit('button-click')
+    }
+    return
+  }
+
+  // Otherwise: this is “go to checkout”
+  checkoutStore.setSelectedItems(selectedItems.value)
+  router.push('/checkout')
 }
 </script>
 

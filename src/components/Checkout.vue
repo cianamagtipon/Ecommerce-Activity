@@ -39,14 +39,14 @@ const loading = ref(false)
 const formRef = ref<FormInstance>()
 
 const editableForm = ref({
-  name: userStore.name,
-  email: userStore.email,
-  phone: userStore.phone,
+  name: '',
+  email: '',
+  phone: '',
   address: {
-    province: userStore.address?.province ?? '',
-    city: userStore.address?.city ?? '',
-    home: userStore.address?.home ?? '',
-    zip: userStore.address?.zip ?? '',
+    province: '',
+    city: '',
+    home: '',
+    zip: '',
   },
   notes: '',
 })
@@ -163,6 +163,12 @@ function toggleEdit(field: 'phone' | 'address') {
 const selectedItems = computed(() => checkoutStore.selectedItems)
 
 async function placeOrder() {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('Please log in to place your order.')
+    window.openLoginModal?.()
+    return
+  }
+
   const { province, city, home, zip } = editableForm.value.address
   if (!province || !city || !home || !zip) {
     isEditingAddress.value = true
@@ -200,12 +206,17 @@ async function placeOrder() {
       },
     })
 
-    await orderStore.placeOrder(selectedItems.value, userStore.email)
+    await orderStore.placeOrder(
+      selectedItems.value,
+      userStore.email,
+      editableForm.value.notes,
+    )
 
     cartStore.selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
     cartStore.selectedISBNs.clear()
     cartStore.saveCartToStorage()
     cartStore.clearSelected()
+
     checkoutStore.clearSelectedItems()
 
     ElMessage.success('Order placed successfully!')
@@ -226,6 +237,25 @@ onMounted(() => {
       const parsedItems = JSON.parse(savedOrder)
       checkoutStore.setSelectedItems(parsedItems)
     }
+  }
+
+  // rehydrate editableForm from userStore after data load
+  editableForm.value = {
+    name: userStore.name ?? '',
+    email: userStore.email ?? '',
+    phone: userStore.phone ?? '',
+    address: {
+      province: userStore.address?.province ?? '',
+      city: userStore.address?.city ?? '',
+      home: userStore.address?.home ?? '',
+      zip: userStore.address?.zip ?? '',
+    },
+    notes: '',
+  }
+
+  // update city list if province exists
+  if (userStore.address?.province) {
+    cities.value = getCitiesByProvince(userStore.address.province)
   }
 })
 

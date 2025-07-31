@@ -33,6 +33,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/profile/user',
+      name: 'profile/orders',
+      component: Profile,
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/store',
       name: 'store',
       component: StoreView,

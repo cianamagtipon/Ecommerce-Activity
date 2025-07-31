@@ -3,14 +3,16 @@ import { computed, onBeforeMount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/pinia/cart'
 import { ElMessageBox } from 'element-plus'
+import { useCheckoutStore } from '@/pinia/checkout'
 
 import CartHeader from './cart/CartHeader.vue'
 import CartCards from './cart/CartCards.vue'
 import CartActions from './cart/CartActions.vue'
 import OrderSummary from './OrderSummary.vue'
-import { useCheckoutStore } from '@/pinia/checkout'
+import { useUserStore } from '../pinia/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const cartStore = useCartStore()
 const checkoutStore = useCheckoutStore()
 
@@ -63,7 +65,21 @@ function checkoutSelected() {
   const selectedItems = cartStore.items.filter((item) =>
     cartStore.selectedISBNs.has(item.product.isbn),
   )
+
+  if (!selectedItems.length) return
+
   checkoutStore.setSelectedItems(selectedItems)
+
+  const email = userStore.currentUser?.email
+  if (!email) {
+    if (typeof window.openLoginModal === 'function') {
+      window.openLoginModal()
+    } else {
+      console.warn('Login modal function not found')
+    }
+    return
+  }
+
   router.push('/checkout')
 }
 
@@ -73,7 +89,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div class="cart">
+  <div :class="['cart', { 'single-column': cartStore.items.length === 0 }]">
     <div class="cart-header">
       <CartHeader />
       <CartActions
@@ -93,9 +109,8 @@ onBeforeMount(() => {
       />
     </div>
 
-    <div class="order-summary">
+    <div v-if="cartStore.items.length > 0" class="order-summary">
       <OrderSummary
-        v-if="cartStore.items.length > 0"
         :selectedItems="
           cartStore.items.filter((item) =>
             cartStore.selectedISBNs.has(item.product.isbn),
@@ -132,6 +147,13 @@ onBeforeMount(() => {
 .cart-view {
   grid-column: 1;
   grid-row: 2;
+  width: 100%;
+}
+
+.single-column .cart-view {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .order-summary {
@@ -139,6 +161,14 @@ onBeforeMount(() => {
   grid-row: 2;
   padding-top: 1rem;
   margin-bottom: 1rem;
+}
+
+.single-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px) {

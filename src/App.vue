@@ -4,7 +4,7 @@ import Menu from './components/Menu.vue'
 import Login from './components/auth/Login.vue'
 import Footer from './components/Footer.vue'
 
-import { ref, onBeforeMount, nextTick } from 'vue'
+import { ref, onBeforeMount, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
@@ -27,6 +27,11 @@ function openRegister() {
   router.push('/register') // redirect to Register view
 }
 
+window.openLoginModal = () => {
+  console.log('openLoginModal called')
+  showLogin.value = true
+}
+
 function handleDialogClosed() {
   if (loginJustSucceeded.value) {
     userStore.loadUserFromStorage()
@@ -37,15 +42,30 @@ function handleDialogClosed() {
 
 function handleLogout() {
   userStore.logout()
-  window.location.reload()
+  router.push('/home')
 }
 
 const route = useRoute()
 
-onBeforeMount(async () => {
-  userStore.loadUserFromStorage()
-  await nextTick()
-  cartStore.loadCartFromStorage()
+onBeforeMount(() => {
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const el = e.target as HTMLElement
+
+      const isInLoginOrRegister =
+        el.closest('.login-form') || el.closest('register')
+
+      if (!isInLoginOrRegister) {
+        e.preventDefault()
+      }
+    }
+  }
+
+  window.addEventListener('keydown', handleKeydown)
+
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+  })
 })
 </script>
 

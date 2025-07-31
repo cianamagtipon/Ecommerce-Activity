@@ -8,7 +8,8 @@ export function useValidationRules() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const postalCodeRegex = /^\d{4}$/
   const nameRegex = /^[A-Za-z\s]{2,}$/
-  const phoneRegex = /^09\d{9}$/
+  const phoneRegex = /^9\d{9}$/
+
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/
 
   const required: FormItemRule = {
@@ -51,7 +52,7 @@ export function useValidationRules() {
   ]
 
   const passwordMatch = (getPassword: () => string): FormItemRule => ({
-    validator: (_rule, value, callback) => {
+    validator: (_rule, value, callback, _source, _options) => {
       if (!value) {
         callback(new Error('Please confirm your password'))
       } else if (value !== getPassword()) {
@@ -77,7 +78,7 @@ export function useValidationRules() {
   })
 
   const phoneRule: FormItemRule[] = [
-    optionalPattern(phoneRegex, 'Phone must start with 09 and be 11 digits'),
+    optionalPattern(phoneRegex, 'Phone must start with 9 and be 10 digits'),
   ]
 
   const provinceRule: FormItemRule[] = []
@@ -129,6 +130,10 @@ export function useValidationRules() {
     'address.province': provinceRule,
     'address.city': cityRule,
     'address.home': homeRule,
+    'address.zip': postalCodeRule(
+      () => '',
+      () => '',
+    ),
   }
 
   return {
@@ -144,5 +149,55 @@ export function useValidationRules() {
     cityRule,
     homeRule,
     postalCodeRule,
+    validateSingleField,
+  }
+
+  async function validateSingleField(
+    value: any,
+    rules: FormItemRule[],
+  ): Promise<string | null> {
+    for (const rule of rules) {
+      // Required check
+      if (
+        rule.required &&
+        (value === null || value === undefined || value === '')
+      ) {
+        return typeof rule.message === 'string'
+          ? rule.message
+          : 'This field is required'
+      }
+
+      // Pattern check
+      if ('pattern' in rule && rule.pattern && value) {
+        const regex = rule.pattern as RegExp
+        if (!regex.test(value)) {
+          return typeof rule.message === 'string'
+            ? rule.message
+            : 'Invalid format'
+        }
+      }
+
+      // Custom validator check (async)
+      if (rule.validator) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            rule.validator!(
+              rule as any,
+              value,
+              (err?: string | Error) => {
+                if (err) reject(err)
+                else resolve()
+              },
+              {}, // dummy source
+              {}, // dummy options
+            )
+          })
+        } catch (err: any) {
+          return err?.message || 'Validation failed'
+        }
+      }
+    }
+
+    return null
   }
 }

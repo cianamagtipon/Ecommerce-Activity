@@ -16,6 +16,7 @@ export const useOrderStore = defineStore('orders', {
     placeOrder(
       selectedItems: { product: any; quantity: number }[],
       userEmail: string,
+      notes: string,
     ) {
       const orderItems: OrderItem[] = selectedItems.map((item) => ({
         isbn: item.product.isbn,
@@ -35,6 +36,7 @@ export const useOrderStore = defineStore('orders', {
         items: orderItems,
         total,
         status: 'pending',
+        notes,
       }
 
       if (!this.orders[userEmail]) {
@@ -68,15 +70,21 @@ export const useOrderStore = defineStore('orders', {
         const parsed = JSON.parse(value)
         if (parsed.orders && typeof parsed.orders === 'object') {
           const converted: Record<string, Order[]> = {}
+
           for (const key in parsed.orders) {
             converted[key] = parsed.orders[key].map((order: any) => ({
-              ...order,
+              id: order.id,
               date: new Date(order.date),
               status: order.status || 'pending',
+              total: order.total,
+              items: Array.isArray(order.items) ? order.items : [],
+              notes: order.notes || '',
             }))
           }
+
           return { orders: converted }
         }
+
         return { orders: {} }
       },
     },
