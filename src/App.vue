@@ -95,10 +95,11 @@ onBeforeMount(() => {
           <RouterView :key="$route.fullPath" />
         </transition>
       </div>
-    </div>
 
-    <!-- Footer -->
-    <Footer />
+      <div class="footer">
+        <Footer />
+      </div>
+    </div>
 
     <!-- Login Modal -->
     <Login
@@ -113,13 +114,13 @@ onBeforeMount(() => {
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .container {
   max-width: 1440px;
   width: 100%;
-  margin: 0 auto;
 }
 
 .header {
@@ -142,6 +143,10 @@ onBeforeMount(() => {
   flex: 1;
   overflow-y: auto;
   padding: 1rem 2rem;
+}
+
+.footer {
+  margin-top: 2rem;
 }
 
 /* Transition styles */

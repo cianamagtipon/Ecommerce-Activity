@@ -18,6 +18,15 @@ import {
         <el-col :xs="24" :sm="12" :md="6">
           <p class="brand">BOOKTALK</p>
           <p class="tagline">Your daily dose of books and stories</p>
+
+          <!-- Payment Methods -->
+          <div class="payment-methods">
+            <span>We accept:</span>
+            <el-icon><CreditCard /></el-icon>
+            <el-icon><Wallet /></el-icon>
+            <el-icon><Money /></el-icon>
+            <el-icon><Coin /></el-icon>
+          </div>
         </el-col>
 
         <!-- Company Info -->
@@ -25,10 +34,10 @@ import {
           <h4 class="section-title">Company</h4>
           <el-link href="#" :underline="false" class="footer-link"
             >About Us</el-link
-          >
+          ><br />
           <el-link href="#" :underline="false" class="footer-link"
             >Careers</el-link
-          >
+          ><br />
           <el-link href="#" :underline="false" class="footer-link"
             >Blog</el-link
           >
@@ -40,9 +49,10 @@ import {
           <el-link href="#" :underline="false" class="footer-link"
             >Help Center</el-link
           >
+          <br />
           <el-link href="#" :underline="false" class="footer-link"
             >Shipping</el-link
-          >
+          ><br />
           <el-link href="#" :underline="false" class="footer-link"
             >Returns</el-link
           >
@@ -65,15 +75,6 @@ import {
           </p>
         </el-col>
       </el-row>
-
-      <!-- Payment Methods -->
-      <div class="payment-methods">
-        <span>We accept:</span>
-        <el-icon><CreditCard /></el-icon>
-        <el-icon><Wallet /></el-icon>
-        <el-icon><Money /></el-icon>
-        <el-icon><Coin /></el-icon>
-      </div>
     </div>
 
     <!-- Bottom -->
@@ -85,7 +86,7 @@ import {
 
 <style scoped>
 .footer {
-  padding: 1.5rem 2rem 1rem;
+  padding: 1.5rem 1rem;
   box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
 
   font-family: 'Segoe UI', sans-serif;
