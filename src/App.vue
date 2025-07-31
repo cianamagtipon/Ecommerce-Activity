@@ -97,6 +97,9 @@ onBeforeMount(() => {
       </div>
     </div>
 
+    <!-- Footer -->
+    <Footer />
+
     <!-- Login Modal -->
     <Login
       v-model:dialog-visible="showLogin"
@@ -110,13 +113,13 @@ onBeforeMount(() => {
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .container {
   max-width: 1440px;
   width: 100%;
+  margin: 0 auto;
 }
 
 .header {
@@ -141,11 +144,11 @@ onBeforeMount(() => {
   padding: 1rem 2rem;
 }
 
+/* Transition styles */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .fade-enter-from {
   opacity: 0;
   transform: translateY(20px);
