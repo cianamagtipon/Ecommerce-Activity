@@ -2,12 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/components/views/HomeView.vue'
 import Register from '@/components/auth/Register.vue'
 import Profile from '@/components/Profile.vue'
-import StoreView from '../components/views/StoreView.vue'
+import StoreView from '@/components/views/StoreView.vue'
 import ProductView from '@/components/views/ProductView.vue'
 import CartView from '@/components/views/CartView.vue'
 import CheckoutView from '@/components/views/CheckoutView.vue'
-import ErrorView from '../components/views/ErrorView.vue'
-import GenreView from '@/components/views/GenreView.vue'
+import ErrorView from '@/components/views/ErrorView.vue'
+import User from '@/components/profile/User.vue'
+import Orders from '@/components/profile/Orders.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,17 +27,26 @@ const router = createRouter({
       name: 'register',
       component: Register,
     },
+
     {
       path: '/profile',
-      name: 'profile',
       component: Profile,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/profile/user',
-      name: 'profile/orders',
-      component: Profile,
-      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          redirect: '/profile/user',
+        },
+        {
+          path: 'user',
+          name: 'user',
+          component: User,
+        },
+        {
+          path: 'orders',
+          name: 'orders',
+          component: Orders,
+        },
+      ],
     },
     {
       path: '/store',
@@ -46,7 +56,7 @@ const router = createRouter({
     {
       path: '/store/:genre',
       name: 'genre',
-      component: GenreView,
+      component: StoreView,
     },
     {
       path: '/store/:genre/:id',
@@ -71,7 +81,7 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: { name: 'error' }, // Catch-all route
+      redirect: { name: 'error' },
     },
   ],
 })

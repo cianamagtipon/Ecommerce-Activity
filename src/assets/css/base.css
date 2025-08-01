@@ -2,7 +2,8 @@ body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  overflow-x: hidden; /* already set */
+  overflow-y: hidden; /* add this to prevent vertical scroll */
   color: var(--color-text);
   background: var(--color-background);
   font-family:
@@ -22,4 +23,14 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar visuals for all elements */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }

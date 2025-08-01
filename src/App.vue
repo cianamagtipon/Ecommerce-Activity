@@ -4,7 +4,7 @@ import Menu from './components/Menu.vue'
 import Login from './components/auth/Login.vue'
 import Footer from './components/Footer.vue'
 
-import { ref, onBeforeMount, nextTick, onUnmounted } from 'vue'
+import { ref, onBeforeMount, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
@@ -91,9 +91,7 @@ onBeforeMount(() => {
 
     <div class="main">
       <div class="container">
-        <transition name="fade" mode="out-in">
-          <RouterView :key="$route.fullPath" />
-        </transition>
+        <RouterView :key="$route.fullPath" />
       </div>
 
       <div class="footer">
@@ -147,19 +145,5 @@ onBeforeMount(() => {
 
 .footer {
   margin-top: 2rem;
-}
-
-/* Transition styles */
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
 }
 </style>

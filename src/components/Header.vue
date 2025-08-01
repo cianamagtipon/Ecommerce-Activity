@@ -2,6 +2,7 @@
 import { useUserStore } from '@/pinia/user'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
+import { SwitchButton } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const { isLoggedIn } = storeToRefs(userStore)
@@ -21,33 +22,35 @@ function goToRegister() {
       <span class="logo">BOOKTALK</span>
 
       <div class="right">
-        <el-button
-          v-if="!isLoggedIn"
-          class="login-button"
-          round
-          @click="emit('login-clicked')"
-        >
-          Log in
-        </el-button>
+        <div class="auth-buttons">
+          <el-button
+            v-if="!isLoggedIn"
+            class="login-button"
+            round
+            @click="emit('login-clicked')"
+          >
+            Log in
+          </el-button>
 
-        <el-button
-          v-if="!isLoggedIn"
-          class="signup-button"
-          round
-          @click="goToRegister"
-        >
-          Sign up for free
-        </el-button>
+          <el-button
+            v-if="!isLoggedIn"
+            class="signup-button"
+            round
+            @click="goToRegister"
+          >
+            Sign up for free
+          </el-button>
 
-        <el-button
-          v-else
-          class="logout-button"
-          round
-          type="danger"
-          @click="emit('logout-clicked')"
-        >
-          Log out
-        </el-button>
+          <el-button
+            v-else
+            :icon="SwitchButton"
+            class="logout-button"
+            round
+            @click="emit('logout-clicked')"
+          >
+            Log out
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -88,21 +91,64 @@ function goToRegister() {
   text-decoration: underline;
 }
 
+.auth-buttons {
+  display: flex;
+  align-items: center;
+}
+
 .signup-button {
-  color: white;
   background-color: #5d3d2e;
+  color: #fff;
   border: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  font-size: 14px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.signup-button:hover {
+  background-color: #bba68b;
+  color: #3b2a22;
+  transform: scale(1.03);
 }
 
 .login-button {
-  border-color: #5d3d2e;
+  border: 1px solid #5d3d2e;
   color: #5d3d2e;
+  background-color: transparent;
+  font-weight: 600;
+  padding: 10px 20px;
+  font-size: 14px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.login-button:hover {
+  border: 1px solid #5d3d2e;
+  background-color: #f3ebe3;
+  color: #3b2a22;
+  transform: scale(1.03);
 }
 
 .logout-button {
   background-color: #5d3d2e;
-  color: white;
+  color: #fff;
   border: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  font-size: 14px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #bba68b;
+  color: #3b2a22;
+  transform: scale(1.03);
 }
 
 .tagline {

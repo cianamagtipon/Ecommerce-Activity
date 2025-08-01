@@ -616,8 +616,7 @@ async function togglePasswordEdit() {
 <style scoped>
 .profile-container {
   max-width: 600px;
-  margin: 2rem auto;
-  padding: 16px 20px;
+  margin: 0 auto;
 }
 
 .profile-section h2 {

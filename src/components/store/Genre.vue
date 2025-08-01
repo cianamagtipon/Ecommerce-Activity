@@ -8,15 +8,18 @@ import type { Genre } from '@/types/product'
 const route = useRoute()
 const productStore = useProductStore()
 
-// gets genre from url (e.g., /store/fiction)
-const genre = computed(() => route.params.genre as Genre)
+// Get genre from URL
+const genre = computed(() => route.params.genre as Genre | undefined)
 
-// filters products by genre
-const filteredProducts = computed(() =>
-  productStore.products.filter(
-    (p) => p.genre.toLowerCase() === genre.value.toLowerCase(),
-  ),
-)
+// Filtered products by genre
+const filteredProducts = computed(() => {
+  if (!genre.value || genre.value.toLowerCase() === 'all') {
+    return productStore.products
+  }
+  return productStore.products.filter(
+    (p) => p.genre.toLowerCase() === genre.value?.toLowerCase(),
+  )
+})
 
 onMounted(() => {
   if (productStore.products.length === 0) {
@@ -26,6 +29,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <h2>{{ genre }} books</h2>
+  <h2 v-if="genre">{{ genre }} books</h2>
   <StoreCards :products="filteredProducts" />
 </template>
