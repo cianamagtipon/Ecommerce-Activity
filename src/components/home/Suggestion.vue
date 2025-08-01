@@ -68,6 +68,8 @@ function goTo(destination: string) {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  gap: clamp(2rem, 13vw, 17rem);
+  padding: 0 1rem;
 }
 
 .feature-item {
@@ -77,8 +79,6 @@ function goTo(destination: string) {
   text-align: center;
   cursor: pointer;
   margin-top: 1rem;
-  margin-left: 5rem;
-  margin-right: 5rem;
   transition: transform 0.3s ease;
 }
 
@@ -99,8 +99,8 @@ function goTo(destination: string) {
 }
 
 .clickable-img {
-  width: 160px;
-  height: 160px;
+  width: clamp(150px, 13vw, 180px);
+  height: clamp(150px, 13vw, 180px);
   object-fit: cover;
   border-radius: 50%;
   box-shadow:
