@@ -51,6 +51,7 @@ const carouselSlides = [
   justify-content: center;
   align-items: center;
   border-radius: 8px;
+  max-width: 1440px;
   margin: 0 auto;
   box-shadow: 0 8px 16px rgba(93, 61, 46, 0.5);
 }

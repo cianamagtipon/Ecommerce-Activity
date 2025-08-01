@@ -45,17 +45,8 @@ const route = useRoute()
     </div>
 
     <div class="sidebar-footer">
-      <!-- <div class="nav-item">
-        <el-icon><Lock /></el-icon>
-        <span>Security</span>
-      </div>
-      <div class="nav-item">
-        <el-icon><Setting /></el-icon>
-        <span>Preferences</span>
-      </div> -->
-
       <el-button
-        class="logout-button"
+        class="feedback-button"
         type="danger"
         :icon="ChatDotRound"
         size="large"
@@ -122,17 +113,21 @@ const route = useRoute()
   margin-top: auto;
 }
 
-.logout-button {
+.feedback-button {
   background-color: #5d3d2e;
-  border-color: #5d3d2e;
-  color: white;
-  font-size: 1rem;
-  padding: 0.75rem 1.5rem;
-  width: 100%;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  font-size: 14px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
-.logout-button:hover {
-  background-color: #7a513c;
-  border-color: #7a513c;
+.feedback-button:hover {
+  background-color: #bba68b;
+  color: #3b2a22;
+  transform: scale(1.03);
 }
 </style>

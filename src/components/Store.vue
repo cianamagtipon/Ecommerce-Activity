@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import StoreSearch from './store/StoreSearch.vue'
-import { useProductStore } from '@/pinia/products'
-import { onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
 import StoreCards from './store/StoreCards.vue'
 import StoreSidebar from './store/StoreSidebar.vue'
 
+import { useProductStore } from '@/pinia/products'
+import { onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import type { Genre } from '@/types/product'
 
 const productStore = useProductStore()
@@ -20,12 +20,12 @@ onMounted(() => {
 // Get genre from route (optional param)
 const genre = computed(() => route.params.genre as Genre | undefined)
 
-// Add after genre
+// Search query from route
 const searchQuery = computed(() =>
   ((route.query.q as string) || '').toLowerCase(),
 )
 
-// Use search query if present, otherwise fall back to genre
+// Filtered products based on query or genre
 const filteredProducts = computed(() => {
   const products = productStore.products
 
@@ -45,6 +45,15 @@ const filteredProducts = computed(() => {
     (p) => p.genre.toLowerCase() === genre.value?.toLowerCase(),
   )
 })
+
+// Scroll to product grid when genre or query changes
+function scrollToGrid() {
+  const grid = document.querySelector('.product-grid')
+  grid?.scrollIntoView({ behavior: 'smooth' })
+}
+
+watch(() => route.params.genre, scrollToGrid)
+watch(() => route.query.q, scrollToGrid)
 </script>
 
 <template>

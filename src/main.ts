@@ -20,6 +20,7 @@ pinia.use(piniaPluginPersistedstate)
 
 app.use(pinia)
 app.use(router)
+
 app.use(ElementPlus)
 
 // load stores before app mount

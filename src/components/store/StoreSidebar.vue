@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElAutocomplete } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
 
-import { useProductStore } from '@/pinia/products'
 import type { Genre } from '@/types/product'
 
 const router = useRouter()
 const route = useRoute()
-
-const productStore = useProductStore()
-
-const searchQuery = ref('')
 
 const genres: (Genre | 'All')[] = [
   'All',

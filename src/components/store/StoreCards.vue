@@ -95,74 +95,76 @@ function addToCart(book: Product, event: Event) {
 
 <template>
   <div class="product-page">
-    <TransitionGroup
-      name="fade-slide"
-      tag="div"
-      class="card-container product-grid"
-    >
-      <router-link
-        v-for="book in paginatedProducts"
-        :key="book.isbn"
-        :to="{
-          name: 'product',
-          params: { genre: book.genre.toLowerCase(), id: book.isbn },
-        }"
-        class="book-link"
+    <div class="products-section">
+      <TransitionGroup
+        name="fade-slide"
+        tag="div"
+        class="card-container product-grid"
       >
-        <el-card class="book-card" shadow="hover">
-          <div
-            v-if="
-              book.rating >= 4 ||
-              new Date(book.publishDate).getFullYear() >= 2020
-            "
-            class="tag-container"
-          >
+        <router-link
+          v-for="book in paginatedProducts"
+          :key="book.isbn"
+          :to="{
+            name: 'product',
+            params: { genre: book.genre.toLowerCase(), id: book.isbn },
+          }"
+          class="book-link"
+        >
+          <el-card class="book-card" shadow="hover">
             <div
-              v-if="new Date(book.publishDate).getFullYear() >= 2020"
-              class="tag"
+              v-if="
+                book.rating >= 4 ||
+                new Date(book.publishDate).getFullYear() >= 2020
+              "
+              class="tag-container"
             >
-              NEW
-            </div>
-            <div v-if="book.rating >= 4" class="tag">BESTSELLER</div>
-          </div>
-
-          <img
-            src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
-            style="width: 100%"
-          />
-
-          <div class="card-info">
-            <div class="book-info">
-              <p>
-                <span class="title"
-                  ><strong>{{ book.title }}</strong></span
-                ><br />
-                <span class="author">{{ book.author }}</span>
-              </p>
+              <div
+                v-if="new Date(book.publishDate).getFullYear() >= 2020"
+                class="tag"
+              >
+                NEW
+              </div>
+              <div v-if="book.rating >= 4" class="tag">BESTSELLER</div>
             </div>
 
-            <div class="book-price">
-              <p>
-                <span v-if="book.discount > 0" class="discounted">
-                  ₱{{ discounted(book) }}
-                </span>
-                <span v-else
-                  ><strong>₱{{ book.retail }}</strong></span
-                ><br />
-                <span v-if="book.discount > 0" class="under-retail">
-                  <del>₱{{ book.retail }}</del>
-                  <span class="discount">-{{ book.discount }}%</span>
-                </span>
-              </p>
-            </div>
-          </div>
+            <img
+              src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
+              style="width: 100%"
+            />
 
-          <div class="add-to-cart" @click="(e) => addToCart(book, e)">
-            <el-icon><ShoppingCart /></el-icon>
-          </div>
-        </el-card>
-      </router-link>
-    </TransitionGroup>
+            <div class="card-info">
+              <div class="book-info">
+                <p>
+                  <span class="title"
+                    ><strong>{{ book.title }}</strong></span
+                  ><br />
+                  <span class="author">{{ book.author }}</span>
+                </p>
+              </div>
+
+              <div class="book-price">
+                <p>
+                  <span v-if="book.discount > 0" class="discounted">
+                    ₱{{ discounted(book) }}
+                  </span>
+                  <span v-else
+                    ><strong>₱{{ book.retail }}</strong></span
+                  ><br />
+                  <span v-if="book.discount > 0" class="under-retail">
+                    <del>₱{{ book.retail }}</del>
+                    <span class="discount">-{{ book.discount }}%</span>
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div class="add-to-cart" @click="(e) => addToCart(book, e)">
+              <el-icon><ShoppingCart /></el-icon>
+            </div>
+          </el-card>
+        </router-link>
+      </TransitionGroup>
+    </div>
 
     <el-pagination
       v-if="props.products.length > pageSize"
@@ -178,25 +180,15 @@ function addToCart(book: Product, event: Event) {
 </template>
 
 <style scoped>
-/* Transitions */
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.3s ease;
-}
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(15px);
-}
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-15px);
-}
-
 .product-page {
   display: flex;
   flex-direction: column;
-  height: 1225px;
+  min-height: 100vh;
   justify-content: space-between;
+}
+
+.products-section {
+  min-height: 1190px;
 }
 
 .card-container {
@@ -314,9 +306,22 @@ del {
 
 .pagination-bar {
   margin-top: 0.2rem;
-  margin-bottom: 1rem;
   display: flex;
   justify-content: center;
+}
+
+/* Transitions */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(15px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
 }
 
 @media (max-width: 1200px) {
