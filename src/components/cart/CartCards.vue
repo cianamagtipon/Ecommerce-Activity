@@ -3,8 +3,15 @@ import { ref, computed } from 'vue'
 import { useCartStore } from '@/pinia/cart'
 import { ElMessageBox } from 'element-plus'
 
+import { useRouter } from 'vue-router'
+
 const cartStore = useCartStore()
 const selectedISBNs = computed(() => cartStore.selectedISBNs)
+const router = useRouter()
+
+function goToStore() {
+  router.push('/store')
+}
 
 const currentPage = ref(1)
 const pageSize = ref(3) // customize per page
@@ -47,7 +54,9 @@ async function confirmRemove(isbn: string) {
     <div class="cart-cards">
       <div v-if="cartStore.items.length === 0" class="empty-cart">
         <el-empty description="Your cart is empty">
-          <el-button type="primary">Check our store!</el-button>
+          <el-button type="primary" class="store-button" @click="goToStore"
+            >Check our store!</el-button
+          >
         </el-empty>
       </div>
 
@@ -155,6 +164,24 @@ async function confirmRemove(isbn: string) {
   padding: 1.5rem;
   text-align: center;
   font-style: italic;
+}
+
+.store-button {
+  background-color: #5d3d2e;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  font-size: 14px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.store-button:hover {
+  background-color: #bba68b;
+  color: #3b2a22;
+  transform: scale(1.03);
 }
 
 /* Grid layout */
