@@ -218,6 +218,7 @@ async function handleRegister() {
         :rules="rules"
         ref="formRef"
         class="register-form"
+        @submit.prevent="handleRegister"
       >
         <el-form-item label="Name" prop="name">
           <el-input
