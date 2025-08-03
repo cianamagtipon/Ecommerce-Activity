@@ -3,6 +3,7 @@ import type { Product } from '@/types/product'
 import { ShoppingCart } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useCartStore } from '@/pinia/cart'
+import { useProductTags } from '@/composables/productTags'
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps<{
@@ -12,7 +13,6 @@ const props = defineProps<{
 const cartStore = useCartStore()
 
 const itemsPerRow = ref(4)
-
 function updateItemsPerRow() {
   const width = window.innerWidth
   if (width < 900) {
@@ -33,7 +33,7 @@ onUnmounted(() => {
 })
 
 const currentPage = ref(1)
-const pageSize = computed(() => itemsPerRow.value * 3) // 3 rows per page
+const pageSize = computed(() => itemsPerRow.value * 3)
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -91,6 +91,8 @@ function addToCart(book: Product, event: Event) {
       .catch(() => {})
   }
 }
+
+const { isNewArrival, isBestSeller } = useProductTags()
 </script>
 
 <template>
@@ -112,19 +114,11 @@ function addToCart(book: Product, event: Event) {
         >
           <el-card class="book-card" shadow="hover">
             <div
-              v-if="
-                book.rating >= 4 ||
-                new Date(book.publishDate).getFullYear() >= 2020
-              "
+              v-if="isNewArrival(book) || isBestSeller(book)"
               class="tag-container"
             >
-              <div
-                v-if="new Date(book.publishDate).getFullYear() >= 2020"
-                class="tag"
-              >
-                NEW
-              </div>
-              <div v-if="book.rating >= 4" class="tag">BESTSELLER</div>
+              <div v-if="isNewArrival(book)" class="tag">NEW</div>
+              <div v-if="isBestSeller(book)" class="tag">BESTSELLER</div>
             </div>
 
             <img
