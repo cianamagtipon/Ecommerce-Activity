@@ -6,7 +6,8 @@ import { useCartStore } from '@/pinia/cart'
 import { useCheckoutStore } from '@/pinia/checkout'
 import { useUserStore } from '@/pinia/user'
 
-import { ShoppingCart, Delete } from '@element-plus/icons-vue'
+import { Delete } from '@element-plus/icons-vue'
+import { ShoppingCartIcon } from '@heroicons/vue/24/solid'
 
 const cartStore = useCartStore()
 const checkoutStore = useCheckoutStore()
@@ -52,14 +53,12 @@ function handleCheckout() {
   const selectedItems = [...cartStore.items]
   if (!selectedItems.length) return
 
-  // mark all items as selected
   const allISBNs = selectedItems.map((item) => item.product.isbn)
   cartStore.selectedISBNs = new Set(allISBNs)
 
   checkoutStore.setSelectedItems(selectedItems)
   localStorage.setItem('currentOrder', JSON.stringify(selectedItems))
 
-  // show modal if not logged in
   const email = userStore.currentUser?.email
   if (!email) {
     window.openLoginModal?.()
@@ -95,9 +94,9 @@ watch(
         class="cart-icon"
         :hidden="totalItems === 0"
       >
-        <el-icon :class="['big-cart-icon', { active: isDropdownOpen }]">
-          <ShoppingCart />
-        </el-icon>
+        <ShoppingCartIcon
+          :class="['big-cart-icon', { active: isDropdownOpen }]"
+        />
       </el-badge>
       <span :class="['cart-label', { active: isDropdownOpen }]">Cart</span>
     </span>
@@ -109,7 +108,6 @@ watch(
             Note: Modify your orders by viewing the full cart.
           </p>
 
-          <!-- Scrollable list -->
           <div class="scrollable-wrapper">
             <div class="scrollable-list">
               <router-link
@@ -164,7 +162,6 @@ watch(
             </div>
           </div>
 
-          <!-- Static Bottom -->
           <div class="subtotal">Subtotal: ₱{{ subtotal }}</div>
           <div class="action-buttons">
             <el-button
@@ -198,7 +195,8 @@ watch(
 }
 
 .big-cart-icon {
-  font-size: 20px;
+  width: 20px;
+  height: 20px;
   color: #bba68b;
   transition: color 0.2s ease;
 }
@@ -390,7 +388,6 @@ watch(
   z-index: 1;
 }
 
-/*  scrollbar style lol */
 .scrollable-list::-webkit-scrollbar {
   width: 6px;
 }

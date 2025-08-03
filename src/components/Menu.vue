@@ -2,7 +2,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, Search } from '@element-plus/icons-vue'
+import { HomeFilled } from '@element-plus/icons-vue'
 import { TagIcon, ShoppingCartIcon } from '@heroicons/vue/24/solid'
 import { Bars3Icon } from '@heroicons/vue/24/outline'
 import { useScreenSize } from '@/composables/screenSize'
@@ -90,65 +90,33 @@ onMounted(syncActiveIndex)
         </div>
       </el-menu>
 
-      <!-- Mobile Navbar -->
-      <div v-else class="mobile-navbar">
-        <el-input
-          v-model="searchText"
-          class="search-bar"
-          placeholder="Type something"
+      <!-- Mobile Bottom Navbar -->
+      <div v-else class="mobile-bottom-navbar">
+        <div
+          class="mobile-nav-item"
+          :class="{ active: activeIndex === '1-1' }"
+          @click="handleSelect('1-1')"
         >
-          <template #prefix>
-            <el-icon><search /></el-icon>
-          </template>
-        </el-input>
-
-        <el-icon @click="toggleDrawer" class="menu-button">
-          <Bars3Icon />
-        </el-icon>
-
-        <el-drawer
-          v-model="isDrawerVisible"
-          direction="ltr"
-          size="200px"
-          with-header="false"
-          :modal="true"
-          append-to-body="false"
-          @opened="lockBodyScroll"
-          @closed="unlockBodyScroll"
+          <el-icon><HomeFilled /></el-icon>
+        </div>
+        <div
+          class="mobile-nav-item"
+          :class="{ active: activeIndex === '1-2' }"
+          @click="handleSelect('1-2')"
         >
-          <div class="drawer-container">
-            <el-menu
-              :default-active="activeIndex"
-              class="vertical-menu drawer-menu"
-              mode="vertical"
-              @select="handleSelect"
-            >
-              <el-menu-item index="1-1">
-                <el-icon><HomeFilled /></el-icon>
-                Home
-              </el-menu-item>
-              <el-menu-item index="1-2">
-                <el-icon><TagIcon /></el-icon>
-                Store
-              </el-menu-item>
-              <el-menu-item index="1-3">
-                <el-icon><ShoppingCartIcon /></el-icon>
-                Cart
-              </el-menu-item>
-            </el-menu>
-
-            <el-menu
-              class="vertical-menu action-menu"
-              mode="vertical"
-              @select="handleSelect"
-            >
-              <el-menu-item index="2-1">Reset</el-menu-item>
-              <el-menu-item index="2-2" class="logout-item"
-                >Logout</el-menu-item
-              >
-            </el-menu>
-          </div>
-        </el-drawer>
+          <el-icon><TagIcon /></el-icon>
+        </div>
+        <div
+          v-if="isLoggedIn"
+          class="mobile-nav-item"
+          :class="{ active: activeIndex === '1-3' }"
+          @click="handleSelect('1-3')"
+        >
+          <el-icon><ShoppingCartIcon /></el-icon>
+        </div>
+        <div class="mobile-nav-item cart-icon">
+          <CartDropdown />
+        </div>
       </div>
     </div>
   </div>
@@ -218,17 +186,38 @@ onMounted(syncActiveIndex)
   NAVBAR STYLES
 ────────────────────────── */
 
-.mobile-navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-sizing: border-box;
-  padding: 0.5rem 1rem;
+.mobile-bottom-navbar {
+  position: fixed;
+  bottom: 0;
   width: 100%;
   max-width: 100vw;
   height: 55px;
-  font-weight: 600;
-  box-shadow: 0 5px 4px rgba(93, 61, 46, 0.05);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: white;
+  border-top: 1px solid #e5e5e5;
+  z-index: 1000;
+}
+
+.mobile-nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 0.25rem 0;
+  color: #bba68b;
+  font-size: 1.2rem;
+  transition: color 0.3s;
+}
+
+.mobile-nav-item.active {
+  color: #5d3d2e;
+  border-top: 2px solid #5d3d2e;
+}
+
+.cart-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .desktop-navbar {
