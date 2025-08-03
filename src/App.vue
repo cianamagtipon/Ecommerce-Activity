@@ -4,7 +4,7 @@ import Menu from './components/Menu.vue'
 import Login from './components/auth/Login.vue'
 import Footer from './components/Footer.vue'
 
-import { ref, onBeforeMount, onUnmounted, computed } from 'vue'
+import { ref, onBeforeMount, onUnmounted, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
@@ -65,6 +65,15 @@ onBeforeMount(() => {
 
   onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
+  })
+})
+
+onMounted(() => {
+  router.afterEach(() => {
+    const main = document.querySelector('.main')
+    if (main) {
+      main.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   })
 })
 </script>

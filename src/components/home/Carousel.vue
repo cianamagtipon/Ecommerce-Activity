@@ -147,7 +147,6 @@ const carouselSlides = [
   }
 
   .carousel {
-    width: 95vw;
     height: 35vh;
   }
 
