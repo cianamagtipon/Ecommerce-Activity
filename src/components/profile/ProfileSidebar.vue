@@ -1,17 +1,8 @@
 <script setup lang="ts">
-import { useUserStore } from '@/pinia/user'
-import {
-  User,
-  List,
-  ChatDotRound,
-  Star,
-  Lock,
-  Setting,
-} from '@element-plus/icons-vue'
+import { User, List, ChatDotRound } from '@element-plus/icons-vue'
 import { ElButton, ElIcon } from 'element-plus'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-const userStore = useUserStore()
 const route = useRoute()
 </script>
 
@@ -36,11 +27,6 @@ const route = useRoute()
           <el-icon><List /></el-icon>
           <span>Orders</span>
         </router-link>
-        <!-- Future feature -->
-        <!-- <div class="nav-item">
-          <el-icon><Star /></el-icon>
-          <span>Saved Items</span>
-        </div> -->
       </nav>
     </div>
 

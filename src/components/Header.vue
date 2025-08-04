@@ -3,6 +3,7 @@ import { useUserStore } from '@/pinia/user'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { SwitchButton } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import { useScreenSize } from '@/composables/screenSize'
 
 const { isMobile } = useScreenSize()
@@ -15,6 +16,20 @@ const emit = defineEmits(['login-clicked', 'logout-clicked'])
 
 function goToRegister() {
   router.push('/registration')
+}
+
+function confirmLogout() {
+  ElMessageBox.confirm('Are you sure you want to log out?', 'Log out', {
+    confirmButtonText: 'Yes',
+    cancelButtonText: 'Cancel',
+    type: 'warning',
+  })
+    .then(() => {
+      emit('logout-clicked')
+    })
+    .catch(() => {
+      // user canceled logout
+    })
 }
 </script>
 
@@ -48,7 +63,7 @@ function goToRegister() {
             :icon="SwitchButton"
             class="logout-button"
             round
-            @click="emit('logout-clicked')"
+            @click="confirmLogout"
           >
             Log out
           </el-button>
@@ -72,7 +87,6 @@ function goToRegister() {
 }
 
 .top-header {
-  /* border-bottom: 0.2px solid #ddd; */
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   display: flex;
@@ -188,7 +202,7 @@ function goToRegister() {
 
   ::v-deep(.el-divider) {
     margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
   }
 }
 </style>

@@ -165,11 +165,6 @@ function blurFormatField(fieldPath: string) {
   }
 }
 
-function getFullAddress() {
-  const a = form.value.address
-  return [a.province, a.city, a.home, a.postalCode].filter(Boolean).join(', ')
-}
-
 async function handleRegister() {
   console.log('[handleRegister] clicked')
   loading.value = true

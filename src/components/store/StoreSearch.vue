@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElAutocomplete } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'

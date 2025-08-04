@@ -196,12 +196,8 @@ const carouselSlides = [
 }
 
 @media (max-width: 600px) {
-  .carousel-container {
-    margin: 1rem auto;
-  }
-
   .carousel {
-    width: 90vw;
+    width: 93vw;
     height: 30vh;
   }
 

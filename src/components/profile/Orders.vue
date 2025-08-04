@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useOrderStore } from '@/pinia/orders'
 import { useUserStore } from '@/pinia/user'
 import type { CollapseModelValue, CollapseActiveName } from 'element-plus'
@@ -246,6 +246,7 @@ onUnmounted(() => {
 <style scoped>
 .order-container {
   margin: 0 auto;
+  max-width: 700px;
 }
 
 .order-heading {
@@ -365,5 +366,66 @@ onUnmounted(() => {
 
 .show-more-btn:hover {
   color: #5d3d2e;
+}
+
+@media (max-width: 600px) {
+  .order-card {
+    gap: 0.5rem;
+    padding: 0;
+  }
+
+  .order-header {
+    font-size: 0.9rem;
+  }
+
+  .item-row {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .item-title {
+    font-size: 0.9rem;
+  }
+
+  .item-qty,
+  .countdown-timer,
+  .item-price {
+    font-size: 0.8rem;
+  }
+
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .status-select {
+    width: 100%;
+  }
+
+  .item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .item-price {
+    align-self: flex-end;
+    font-size: 0.9rem;
+  }
+
+  .order-toggle {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .order-card {
+    font-size: 0.9rem;
+  }
+
+  .status-steps {
+    flex-direction: column;
+  }
 }
 </style>

@@ -14,7 +14,7 @@ import {
   <el-footer class="footer">
     <div class="footer-top">
       <el-row :gutter="20" class="footer-grid" justify="space-between">
-        <!-- Logo & Tagline -->
+        <!-- Logo and Tagline -->
         <el-col :xs="24" :sm="12" :md="6">
           <p class="brand">BOOKTALK</p>
           <p class="tagline">Your daily dose of books and stories</p>
@@ -158,7 +158,6 @@ import {
   color: #5d3d2e;
 }
 
-/* Bottom */
 .footer-bottom {
   text-align: center;
   font-size: 0.75rem;

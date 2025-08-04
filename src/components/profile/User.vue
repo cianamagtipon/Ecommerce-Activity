@@ -367,7 +367,7 @@ async function togglePasswordEdit() {
 
   const { password, confirmPassword } = editablePassword.value
 
-  // If both fields are empty, skip validation and just close edit mode
+  // if both fields are empty, skip validation and just close edit mode
   if (!password && !confirmPassword) {
     isEditingPassword.value = false
     editablePassword.value.password = ''
@@ -375,7 +375,7 @@ async function togglePasswordEdit() {
     return
   }
 
-  // Proceed with validation if any field is filled
+  // proceed with validation if any field is filled
   const passwordError = await validateSingleField(password, passwordRule)
   const confirmError = await validateSingleField(confirmPassword, [
     required,

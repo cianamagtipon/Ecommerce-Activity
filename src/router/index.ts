@@ -10,6 +10,8 @@ import ErrorView from '@/components/views/ErrorView.vue'
 import User from '@/components/profile/User.vue'
 import Orders from '@/components/profile/Orders.vue'
 
+import { useUserStore } from '@/pinia/user'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -84,6 +86,26 @@ const router = createRouter({
       redirect: { name: 'error' },
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+
+  // Pages that require authentication
+  const protectedRoutes = [
+    '/profile',
+    '/profile/user',
+    '/profile/orders',
+    '/checkout',
+  ]
+
+  const isProtected = protectedRoutes.some((path) => to.path.startsWith(path))
+
+  if (isProtected && !userStore.isLoggedIn) {
+    next('/home') // redirect to home if not logged in
+  } else {
+    next()
+  }
 })
 
 export default router

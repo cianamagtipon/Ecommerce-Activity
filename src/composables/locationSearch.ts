@@ -1,7 +1,7 @@
 import { luzonLocations } from '@/assets/data/luzonLocations'
 
 export function useLocationSearch() {
-  // Search for a city based on the full or partial ZIP code
+  // search for a city based on the full or partial ZIP code
   function findCityByZipPrefix(
     zipCode: string,
   ): { province: string; city: string } | null {
@@ -17,7 +17,7 @@ export function useLocationSearch() {
     return null
   }
 
-  // Search for a city by its name (case-insensitive)
+  // search for a city by its name (case-insensitive)
   function searchCityByName(
     name: string,
   ): { province: string; city: string } | null {
@@ -32,12 +32,12 @@ export function useLocationSearch() {
     return null
   }
 
-  // Get all cities under a given province
+  // get all cities under a given province
   function getCitiesByProvince(province: string): string[] {
     return luzonLocations[province]?.map((entry) => entry.city) ?? []
   }
 
-  // Get all provinces
+  // get all provinces
   function getAllProvinces(): string[] {
     return Object.keys(luzonLocations)
   }

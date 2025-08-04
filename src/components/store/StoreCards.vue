@@ -336,7 +336,6 @@ del {
   justify-content: center;
 }
 
-/* Transitions */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.3s ease;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { useUserStore } from '@/pinia/user'
@@ -79,12 +79,27 @@ function goToRegister() {
   closeDialog()
   router.push('/registration')
 }
+
+// Responsive dialog width
+const dialogWidth = ref(getDialogWidth())
+function getDialogWidth() {
+  return window.innerWidth < 600 ? '90vw' : '450px'
+}
+function handleResize() {
+  dialogWidth.value = getDialogWidth()
+}
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <template>
   <el-dialog
     v-model="dialogVisible"
-    width="450px"
+    :width="dialogWidth"
     append-to-body
     class="login-dialog"
     :close-on-click-modal="false"
@@ -174,15 +189,7 @@ function goToRegister() {
 <style scoped>
 .login-dialog {
   border-radius: 20px;
-}
-
-.login-note {
-  margin-top: -1rem;
-  margin-bottom: 2.5rem;
-  font-size: 14px;
-  color: #6c584c;
-  text-align: center;
-  line-height: 1.4;
+  max-width: 100vw;
 }
 
 .login-content {
@@ -197,10 +204,20 @@ function goToRegister() {
   text-align: center;
 }
 
+.login-note {
+  margin-top: -1rem;
+  margin-bottom: 2.5rem;
+  font-size: 14px;
+  color: #6c584c;
+  text-align: center;
+  line-height: 1.4;
+}
+
 .footer-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .login-btn {
@@ -258,5 +275,37 @@ function goToRegister() {
 
 .signup-prompt a:hover {
   color: #9c6644;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .login-content {
+    padding: 1rem 1.5rem;
+  }
+
+  .dialog-title {
+    font-size: 20px;
+  }
+
+  .login-note {
+    font-size: 13px;
+  }
+
+  .signup-prompt {
+    font-size: 12px;
+  }
+
+  .footer-buttons {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .login-btn,
+  .cancel-btn {
+    width: 100%;
+  }
 }
 </style>

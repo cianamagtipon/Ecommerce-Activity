@@ -3,11 +3,14 @@ import { ref, watch, onMounted, computed } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, UserFilled } from '@element-plus/icons-vue'
-import { TagIcon, BookOpenIcon } from '@heroicons/vue/24/solid'
+import { BookOpenIcon } from '@heroicons/vue/24/solid'
 import { useScreenSize } from '@/composables/screenSize'
 import { useUserStore } from '@/pinia/user'
+import { ElMessageBox } from 'element-plus'
 
 import CartDropdown from '@/components/cart/CartDropdown.vue'
+
+const emit = defineEmits(['logout-clicked', 'login-clicked'])
 
 const userStore = useUserStore()
 const isLoggedIn = computed(() => !!userStore.currentUser)
@@ -17,41 +20,44 @@ const fullscreenLoading = ref(false)
 const route = useRoute()
 const router = useRouter()
 
-const searchText = ref('')
 const activeIndex = ref('1')
 const { isMobile } = useScreenSize()
 const isDrawerVisible = ref(false)
 
-const handleSelect = (key: string) => {
+const handleSelect = async (key: string) => {
   activeIndex.value = key
-  if (key === '1-1') router.push('/home')
-  else if (key === '1-2') router.push('/store')
-  else if (key === '1-3') router.push('/profile')
-  else if (key === '2-1' || key === '2-2') {
-    console.log('Clicked:', key)
+
+  if (key === '1-1') {
+    router.push('/home')
+  } else if (key === '1-2') {
+    router.push('/store')
+  } else if (key === '1-3') {
+    router.push('/profile')
+  } else if (key === 'orders') {
+    router.push('/profile/orders')
+  } else if (key === 'logout') {
+    try {
+      await ElMessageBox.confirm(
+        'Are you sure you want to log out?',
+        'Confirm Logout',
+        {
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+          type: 'warning',
+        },
+      )
+      userStore.logout?.()
+      router.push('/home')
+    } catch (err) {
+      console.log('Logout cancelled.')
+    }
+  } else if (key === 'login') {
+    emit('login-clicked')
+  } else if (key === 'signup') {
+    router.push('/registration')
   }
+
   isDrawerVisible.value = false
-}
-
-const toggleDrawer = () => {
-  isDrawerVisible.value = !isDrawerVisible.value
-}
-
-let scrollBarWidth = 0
-const lockBodyScroll = () => {
-  const body = document.body
-  void body.offsetWidth
-  scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
-  body.style.overflow = 'hidden'
-  if (scrollBarWidth > 0) body.style.paddingRight = `${scrollBarWidth}px`
-}
-
-const unlockBodyScroll = () => {
-  const body = document.body
-  setTimeout(() => {
-    body.style.overflow = ''
-    body.style.paddingRight = ''
-  }, 0)
 }
 
 const syncActiveIndex = () => {
@@ -111,13 +117,32 @@ onMounted(syncActiveIndex)
           <CartDropdown />
         </div>
 
-        <div
-          v-if="isLoggedIn"
-          class="mobile-nav-item"
-          :class="{ active: activeIndex === '1-3' }"
-          @click="handleSelect('1-3')"
-        >
-          <el-icon><UserFilled /></el-icon>
+        <div class="mobile-nav-item user-dropdown">
+          <el-dropdown
+            trigger="click"
+            @command="handleSelect"
+            class="dropdown-inner"
+          >
+            <span class="el-dropdown-link">
+              <el-icon><UserFilled /></el-icon>
+            </span>
+
+            <template #dropdown>
+              <el-dropdown-menu>
+                <template v-if="isLoggedIn">
+                  <el-dropdown-item command="1-3">Profile</el-dropdown-item>
+                  <el-dropdown-item command="orders">Orders</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>
+                    <span class="logout-item">Logout</span>
+                  </el-dropdown-item>
+                </template>
+                <template v-else>
+                  <el-dropdown-item command="login">Login</el-dropdown-item>
+                  <el-dropdown-item command="signup">Sign Up</el-dropdown-item>
+                </template>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
     </div>
@@ -138,7 +163,6 @@ onMounted(syncActiveIndex)
   --el-color-primary: #5d3d2e;
 }
 
-/* or scoped override */
 ::v-deep(.el-menu-item.is-active),
 ::v-deep(.el-menu-item:hover),
 ::v-deep(.el-sub-menu__title.is-active) {
@@ -159,8 +183,6 @@ onMounted(syncActiveIndex)
 ::v-deep(.el-sub-menu__title) {
   color: #bba68b !important;
 }
-
-/* ANIMATION FOR SELECT */
 
 ::v-deep(.el-menu--horizontal > .el-menu-item) {
   position: relative;
@@ -215,6 +237,34 @@ onMounted(syncActiveIndex)
   color: #5d3d2e;
 }
 
+.user-dropdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dropdown-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.el-dropdown-link {
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #bba68b;
+}
+
+.el-dropdown-menu {
+  min-width: 120px;
+  text-align: left;
+}
+
+.logout-item {
+  color: #ff2200af !important;
+}
+
 .cart-icon {
   display: flex;
   justify-content: center;
@@ -250,25 +300,25 @@ onMounted(syncActiveIndex)
 }
 
 .search-bar ::v-deep(.el-input__inner::placeholder) {
-  color: #bba68b !important; /* Light brown or muted beige */
+  color: #bba68b !important;
   opacity: 1 !important;
 }
 
 /* Input text color */
 .search-bar ::v-deep(.el-input__inner) {
-  color: #5d3d2e; /* Text color */
+  color: #5d3d2e;
 }
 
 /* Search icon color */
 .search-bar ::v-deep(.el-input__prefix .el-icon) {
-  color: #5d3d2e; /* Icon color */
+  color: #5d3d2e;
   margin-left: 10px;
 }
 
 /* Input border and background */
 .search-bar ::v-deep(.el-input__wrapper) {
   border-radius: 10px;
-  border: 1px solid #d4c4b6; /* Optional: custom border */
+  border: 1px solid #d4c4b6;
   box-shadow: none;
   padding: 4px;
 }
@@ -288,27 +338,28 @@ onMounted(syncActiveIndex)
   background-color: transparent !important;
 }
 
-/* ────────────────────────
-  DRAWER
-────────────────────────── */
-
-.drawer-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+/* Dropdown menu theme */
+::v-deep(.el-dropdown-menu) {
+  background-color: #fff8f3 !important;
+  border: 1px solid #d4c4b6 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
 }
 
-.vertical-menu {
-  border: none !important;
+/* Dropdown item text color and hover effect */
+::v-deep(.el-dropdown-menu__item) {
+  color: #5d3d2e !important;
+  font-weight: 500;
+  padding: 10px 16px;
+  transition: background 0.2s;
 }
 
-.drawer-menu {
-  flex-grow: 1;
+::v-deep(.el-dropdown-menu__item--divided::before) {
+  border-top: 1px solid #d4c4b6 !important;
 }
 
-.action-menu {
-  border-top: 1px solid #e4e7ed;
-  padding-top: 0.5rem;
+.logout-item {
+  color: #d9372c !important;
+  font-weight: 600;
 }
 </style>

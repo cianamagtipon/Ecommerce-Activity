@@ -1,4 +1,3 @@
-<!-- src/components/cart/CartHeader.vue -->
 <script setup lang="ts">
 import { useCartStore } from '@/pinia/cart'
 

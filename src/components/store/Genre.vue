@@ -8,10 +8,10 @@ import type { Genre } from '@/types/product'
 const route = useRoute()
 const productStore = useProductStore()
 
-// Get genre from URL
+// get genre from URL
 const genre = computed(() => route.params.genre as Genre | undefined)
 
-// Filtered products by genre
+// filtered products by genre
 const filteredProducts = computed(() => {
   if (!genre.value || genre.value.toLowerCase() === 'all') {
     return productStore.products

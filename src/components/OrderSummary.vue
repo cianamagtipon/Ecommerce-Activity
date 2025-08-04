@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Product } from '@/types/product'
 import type { FormInstance } from 'element-plus'
 import { ElMessage } from 'element-plus'
@@ -85,7 +85,7 @@ async function handleCheckout() {
     return
   }
 
-  // Otherwise: this is “go to checkout”
+  // go to checkout
   checkoutStore.setSelectedItems(selectedItems.value)
   router.push('/checkout')
 }

@@ -80,7 +80,7 @@ onMounted(() => {
 
 <template>
   <div class="app">
-    <div v-if="route.name !== 'error'">
+    <div v-if="route.name !== 'error'" class="top">
       <div class="header">
         <div class="container">
           <Header
@@ -93,7 +93,11 @@ onMounted(() => {
 
       <div class="menu">
         <div class="container">
-          <Menu />
+          <Menu
+            @login-clicked="openLogin"
+            @signup-clicked="openRegister"
+            @logout-clicked="handleLogout"
+          />
         </div>
       </div>
     </div>
@@ -103,7 +107,7 @@ onMounted(() => {
         <RouterView :key="$route.fullPath" />
       </div>
 
-      <div class="footer">
+      <div class="footer" v-if="route.name !== 'error'">
         <Footer />
       </div>
     </div>
@@ -159,6 +163,12 @@ onMounted(() => {
 @media (max-width: 600px) {
   .main {
     padding: 1rem;
+  }
+
+  .top {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+
+    padding-bottom: 0.2rem;
   }
 }
 </style>

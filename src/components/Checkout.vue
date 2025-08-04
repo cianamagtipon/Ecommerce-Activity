@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check, Edit } from '@element-plus/icons-vue'
 
 import { useUserStore } from '@/pinia/user'
@@ -22,7 +22,7 @@ const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const router = useRouter()
 
-const { required, emailRule, phoneRule, postalCodeRule } = useValidationRules()
+const { required, phoneRule, postalCodeRule } = useValidationRules()
 const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail } =
   useFormatter()
 const { findCityByZipPrefix, getCitiesByProvince, getAllProvinces } =
@@ -191,6 +191,34 @@ async function placeOrder() {
     return
   }
 
+  // basic confirmation message
+  const totalAmount = selectedItems.value.reduce((sum, item) => {
+    const discounted = item.product.retail * (1 - item.product.discount / 100)
+    return sum + discounted * item.quantity
+  }, 0)
+
+  const address = `${editableForm.value.address.home}, ${editableForm.value.address.city}, ${editableForm.value.address.province}. ${editableForm.value.address.zip}`
+
+  try {
+    await ElMessageBox.confirm(
+      `<div style="text-align: left;">
+        <p>You're about to place your order.</p>
+        <p><strong>Total:</strong> ₱${totalAmount.toFixed(2)}</p>
+        <p><strong>Ship to:</strong> ${address}</p>
+      </div>`,
+      'Place Order?',
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: 'Yes, Place Order',
+        cancelButtonText: 'Cancel',
+        type: 'info',
+      },
+    )
+  } catch {
+    // user canceled
+    return
+  }
+
   try {
     loading.value = true
 
@@ -293,6 +321,7 @@ onBeforeRouteLeave(() => {
               <label class="label">
                 <span>Name</span>
               </label>
+
               <!-- No edit button for name -->
             </div>
             <div class="readonly-text">
@@ -306,6 +335,7 @@ onBeforeRouteLeave(() => {
               <label class="label">
                 <span>Email</span>
               </label>
+
               <!-- No edit button for email -->
             </div>
             <div class="readonly-text">
@@ -344,8 +374,9 @@ onBeforeRouteLeave(() => {
             </template>
           </div>
 
-          <h3>Shipping Address</h3>
           <!-- Address (editable) -->
+          <h3>Shipping Address</h3>
+
           <div class="field-group">
             <div class="field-header">
               <label class="label">
@@ -548,7 +579,7 @@ onBeforeRouteLeave(() => {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 1rem;
+    padding: 0;
   }
 
   .checkout-form,
