@@ -6,7 +6,7 @@ export function useProductTags() {
   }
 
   function isBestSeller(product: Product): boolean {
-    return product.rating >= 4
+    return product.rating >= 3.5
   }
 
   return { isNewArrival, isBestSeller }
