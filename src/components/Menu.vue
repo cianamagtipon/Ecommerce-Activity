@@ -3,7 +3,7 @@ import { ref, watch, onMounted, computed } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, UserFilled } from '@element-plus/icons-vue'
-import { TagIcon, ShoppingCartIcon } from '@heroicons/vue/24/solid'
+import { TagIcon, BookOpenIcon } from '@heroicons/vue/24/solid'
 import { useScreenSize } from '@/composables/screenSize'
 import { useUserStore } from '@/pinia/user'
 
@@ -104,7 +104,7 @@ onMounted(syncActiveIndex)
           :class="{ active: activeIndex === '1-2' }"
           @click="handleSelect('1-2')"
         >
-          <el-icon><TagIcon /></el-icon>
+          <el-icon><BookOpenIcon /></el-icon>
         </div>
 
         <div class="mobile-nav-item cart-icon">
@@ -213,7 +213,6 @@ onMounted(syncActiveIndex)
 
 .mobile-nav-item.active {
   color: #5d3d2e;
-  border-top: 2px solid #5d3d2e;
 }
 
 .cart-icon {
@@ -231,6 +230,12 @@ onMounted(syncActiveIndex)
   display: flex;
   align-items: center;
   padding: 0 12px;
+}
+
+.mobile-bottom-navbar .el-icon,
+.mobile-bottom-navbar svg {
+  width: 22px;
+  height: 22px;
 }
 
 /* BUTTON */
