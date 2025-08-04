@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import StoreSearch from './store/StoreSearch.vue'
 import StoreSidebar from './store/StoreSidebar.vue'
 import StoreCards from './store/StoreCards.vue'
-import { ElDrawer } from 'element-plus'
 
-import { useProductStore } from '@/pinia/products'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElDrawer } from 'element-plus'
 import type { Genre } from '@/types/product'
+
+import { useProductTags } from '@/composables/productTags'
+import { useProductStore } from '@/pinia/products'
+
+const { isNewArrival, isBestSeller } = useProductTags()
 
 const productStore = useProductStore()
 const route = useRoute()
 
 const drawerVisible = ref(false)
 
-const genre = computed(() => route.params.genre as Genre | undefined)
+type ExtendedGenre = Genre | 'Best Sellers' | 'New Arrivals' | 'All'
+
+const genre = computed(() => route.params.genre as ExtendedGenre | undefined)
+
 const searchQuery = computed(() =>
   ((route.query.q as string) || '').toLowerCase(),
 )
@@ -30,7 +37,18 @@ const filteredProducts = computed(() => {
     )
   }
 
-  if (!genre.value || genre.value.toLowerCase() === 'all') return products
+  if (!genre.value || genre.value.toLowerCase() === 'all') {
+    return products
+  }
+
+  if (genre.value === 'Best Sellers') {
+    return products.filter(isBestSeller)
+  }
+
+  if (genre.value === 'New Arrivals') {
+    return products.filter(isNewArrival)
+  }
+
   return products.filter(
     (p) => p.genre.toLowerCase() === genre.value?.toLowerCase(),
   )

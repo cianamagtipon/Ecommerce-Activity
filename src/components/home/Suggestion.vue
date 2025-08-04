@@ -5,9 +5,9 @@ const router = useRouter()
 
 function goTo(destination: string) {
   if (destination === 'bestsellers') {
-    router.push('/store?filter=best-sellers')
+    router.push('/store/Best%20Sellers')
   } else if (destination === 'new') {
-    router.push('/store?filter=new-arrivals')
+    router.push('/store/New%20Arrivals')
   } else {
     router.push('/store')
   }
