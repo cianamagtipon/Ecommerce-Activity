@@ -88,7 +88,6 @@ import {
 .footer {
   padding: 1.5rem 1rem;
   box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
-
   font-family: 'Segoe UI', sans-serif;
   color: #5d3d2e;
   font-size: 0.9rem;

@@ -7,11 +7,14 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElDrawer } from 'element-plus'
 import type { Genre } from '@/types/product'
+import { Search } from '@element-plus/icons-vue'
+import { useScreenSize } from '@/composables/screenSize'
 
 import { useProductTags } from '@/composables/productTags'
 import { useProductStore } from '@/pinia/products'
 
 const { isNewArrival, isBestSeller } = useProductTags()
+const { isMobile } = useScreenSize()
 
 const productStore = useProductStore()
 const route = useRoute()
@@ -72,8 +75,8 @@ onMounted(() => {
 <template>
   <div class="store-layout">
     <!-- Drawer toggle button (mobile only) -->
-    <button class="drawer-toggle" @click="drawerVisible = true">
-      Filters & Search
+    <button v-if="isMobile" class="fab-toggle" @click="drawerVisible = true">
+      <el-icon class="fab-icon"><Search /></el-icon>
     </button>
 
     <!-- Sidebar shown on desktop only -->
@@ -115,8 +118,6 @@ onMounted(() => {
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .sidebar-container {
@@ -133,20 +134,11 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-right: 1rem;
 }
 
 /* Drawer toggle button (mobile only) */
-.drawer-toggle {
-  display: none;
-  margin: 1rem 0;
-  padding: 0.5rem 1rem;
-  background-color: #5d3d2e;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
+.fab-icon {
+  font-size: 20px;
 }
 
 /* Transition */
@@ -167,18 +159,36 @@ onMounted(() => {
     max-width: 100%;
   }
 
+  .main-content {
+    padding-top: 1rem;
+    width: 100%;
+  }
+
   .drawer-toggle {
     display: inline-block;
     align-self: flex-start;
-    margin-left: 1rem;
   }
 
   .sidebar-container.desktop-only {
     display: none;
   }
 
-  .main-content {
-    padding: 0 1rem;
+  .fab-toggle {
+    position: fixed;
+    bottom: 4.2rem;
+    right: 2rem;
+    background-color: #5d3d2e;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    cursor: pointer;
   }
 }
 </style>

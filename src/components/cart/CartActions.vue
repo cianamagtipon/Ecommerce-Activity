@@ -85,4 +85,10 @@ const { selectedISBNs, isAllSelected } = storeToRefs(cartStore)
 .bulk-action.primary:hover:not(:disabled) {
   background-color: #3b2a22;
 }
+
+@media (max-width: 500px) {
+  .cart-actions {
+    padding: 0;
+  }
+}
 </style>

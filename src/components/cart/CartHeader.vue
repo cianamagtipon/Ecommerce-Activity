@@ -46,4 +46,11 @@ const cartStore = useCartStore()
   font-size: 1.2rem;
   white-space: nowrap;
 }
+
+@media (max-width: 500px) {
+  .cart-header {
+    padding: 0;
+    padding-bottom: 0.5rem;
+  }
+}
 </style>

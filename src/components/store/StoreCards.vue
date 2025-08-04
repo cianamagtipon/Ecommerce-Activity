@@ -24,12 +24,29 @@ function updateItemsPerRow() {
   }
 }
 
+const pagerCount = ref(7)
+
+function updatePagerCount() {
+  const width = window.innerWidth
+  if (width < 500) {
+    pagerCount.value = 3
+  } else if (width < 800) {
+    pagerCount.value = 5
+  } else {
+    pagerCount.value = 7
+  }
+}
+
 onMounted(() => {
   updateItemsPerRow()
+  updatePagerCount()
   window.addEventListener('resize', updateItemsPerRow)
+  window.addEventListener('resize', updatePagerCount)
 })
+
 onUnmounted(() => {
   window.removeEventListener('resize', updateItemsPerRow)
+  window.removeEventListener('resize', updatePagerCount)
 })
 
 const currentPage = ref(1)
@@ -98,66 +115,68 @@ const { isNewArrival, isBestSeller } = useProductTags()
 <template>
   <div class="store">
     <div class="products-section">
-      <TransitionGroup
-        name="fade-slide"
-        tag="div"
-        class="card-container product-grid"
-      >
-        <router-link
-          v-for="book in paginatedProducts"
-          :key="book.isbn"
-          :to="{
-            name: 'product',
-            params: { genre: book.genre.toLowerCase(), id: book.isbn },
-          }"
-          class="book-link"
+      <div class="card-wrapper">
+        <TransitionGroup
+          name="fade-slide"
+          tag="div"
+          class="card-container product-grid"
         >
-          <el-card class="book-card" shadow="hover">
-            <div
-              v-if="isNewArrival(book) || isBestSeller(book)"
-              class="tag-container"
-            >
-              <div v-if="isNewArrival(book)" class="tag">NEW</div>
-              <div v-if="isBestSeller(book)" class="tag">BESTSELLER</div>
-            </div>
-
-            <img
-              src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
-              style="width: 100%"
-            />
-
-            <div class="card-info">
-              <div class="book-info">
-                <p>
-                  <span class="title"
-                    ><strong>{{ book.title }}</strong></span
-                  ><br />
-                  <span class="author">{{ book.author }}</span>
-                </p>
+          <router-link
+            v-for="book in paginatedProducts"
+            :key="book.isbn"
+            :to="{
+              name: 'product',
+              params: { genre: book.genre.toLowerCase(), id: book.isbn },
+            }"
+            class="book-link"
+          >
+            <el-card class="book-card" shadow="hover">
+              <div
+                v-if="isNewArrival(book) || isBestSeller(book)"
+                class="tag-container"
+              >
+                <div v-if="isNewArrival(book)" class="tag">NEW</div>
+                <div v-if="isBestSeller(book)" class="tag">BESTSELLER</div>
               </div>
 
-              <div class="book-price">
-                <p>
-                  <span v-if="book.discount > 0" class="discounted">
-                    ₱{{ discounted(book) }}
-                  </span>
-                  <span v-else
-                    ><strong>₱{{ book.retail }}</strong></span
-                  ><br />
-                  <span v-if="book.discount > 0" class="under-retail">
-                    <del>₱{{ book.retail }}</del>
-                    <span class="discount">-{{ book.discount }}%</span>
-                  </span>
-                </p>
-              </div>
-            </div>
+              <img
+                src="https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg"
+                style="width: 100%"
+              />
 
-            <div class="add-to-cart" @click="(e) => addToCart(book, e)">
-              <el-icon><ShoppingCart /></el-icon>
-            </div>
-          </el-card>
-        </router-link>
-      </TransitionGroup>
+              <div class="card-info">
+                <div class="book-info">
+                  <p>
+                    <span class="title"
+                      ><strong>{{ book.title }}</strong></span
+                    ><br />
+                    <span class="author">{{ book.author }}</span>
+                  </p>
+                </div>
+
+                <div class="book-price">
+                  <p>
+                    <span v-if="book.discount > 0" class="discounted">
+                      ₱{{ discounted(book) }}
+                    </span>
+                    <span v-else
+                      ><strong>₱{{ book.retail }}</strong></span
+                    ><br />
+                    <span v-if="book.discount > 0" class="under-retail">
+                      <del>₱{{ book.retail }}</del>
+                      <span class="discount">-{{ book.discount }}%</span>
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="add-to-cart" @click="(e) => addToCart(book, e)">
+                <el-icon><ShoppingCart /></el-icon>
+              </div>
+            </el-card>
+          </router-link>
+        </TransitionGroup>
+      </div>
     </div>
 
     <el-pagination
@@ -165,6 +184,7 @@ const { isNewArrival, isBestSeller } = useProductTags()
       v-model:current-page="currentPage"
       :page-size="pageSize"
       :total="props.products.length"
+      :pager-count="pagerCount"
       size="medium"
       layout="prev, pager, next"
       background
@@ -185,12 +205,18 @@ const { isNewArrival, isBestSeller } = useProductTags()
   min-height: 1190px;
 }
 
+.card-wrapper {
+  display: flex;
+  width: 100%;
+}
+
 .card-container {
   display: grid;
-  width: 100%;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
-  padding: 1rem;
+  padding-top: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .book-link {
@@ -231,6 +257,7 @@ const { isNewArrival, isBestSeller } = useProductTags()
 .title {
   font-size: 14px;
 }
+
 .author {
   display: block;
   color: #999;
@@ -244,16 +271,19 @@ const { isNewArrival, isBestSeller } = useProductTags()
   font-weight: 600;
   margin-right: 1rem;
 }
+
 .discount {
   color: #bba68b;
   font-size: 14px;
   font-weight: 600;
   margin-left: 0.5rem;
 }
+
 .under-retail {
   display: block;
   margin-top: 5px;
 }
+
 del {
   color: #999;
   font-size: 14px;
@@ -273,6 +303,7 @@ del {
     background 0.3s ease,
     transform 0.2s ease;
 }
+
 .add-to-cart:hover {
   color: #5d3d2e;
   transform: scale(1.1);
@@ -288,6 +319,7 @@ del {
   z-index: 2;
   pointer-events: none;
 }
+
 .tag {
   background-color: #f97316;
   padding: 2px 8px;
@@ -323,9 +355,29 @@ del {
     grid-template-columns: repeat(3, 1fr);
   }
 }
-@media (max-width: 900px) {
+
+@media (max-width: 500px) {
   .card-container {
     grid-template-columns: repeat(2, 1fr);
+    padding: 0;
+  }
+
+  .products-section {
+    flex: 1;
+    padding: 1rem 0;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .add-to-cart {
+    bottom: 5px;
+    right: 12px;
+    padding: 5px;
+  }
+
+  .book-card {
+    padding-bottom: 1rem;
   }
 }
 </style>

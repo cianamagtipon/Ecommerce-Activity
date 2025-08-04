@@ -155,4 +155,10 @@ onMounted(() => {
 .footer {
   margin-top: 2rem;
 }
+
+@media (max-width: 600px) {
+  .main {
+    padding: 1rem;
+  }
+}
 </style>

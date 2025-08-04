@@ -21,8 +21,4 @@ import Cart from '@/components/Cart.vue'
   opacity: 0;
   transform: translateY(20px);
 }
-
-.cart {
-  padding: 1rem;
-}
 </style>
