@@ -20,10 +20,16 @@ const fallbackImage =
   'https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg'
 
 const totalItems = computed(() => cartStore.items.length)
-const isDropdownOpen = ref(false)
+const isDropdownOpen = ref<boolean>(false)
+const dropdownRef = ref()
 
-function handleVisibleChange(visible: boolean) {
-  isDropdownOpen.value = visible
+function handleVisibleChange(val: boolean) {
+  isDropdownOpen.value = val
+}
+
+function closeDropdown() {
+  isDropdownOpen.value = false
+  dropdownRef.value?.handleClose?.()
 }
 
 function goToCart() {
@@ -65,8 +71,11 @@ function handleCheckout() {
     return
   }
 
-  isDropdownOpen.value = false
-  router.push('/checkout')
+  closeDropdown()
+
+  setTimeout(() => {
+    router.push('/checkout')
+  }, 150)
 }
 
 onMounted(() => {
@@ -87,7 +96,12 @@ watch(
 </script>
 
 <template>
-  <el-dropdown trigger="click" @visible-change="handleVisibleChange">
+  <el-dropdown
+    ref="dropdownRef"
+    v-model:visible="isDropdownOpen"
+    @visible-change="handleVisibleChange"
+    trigger="click"
+  >
     <span class="el-dropdown-link cart-trigger">
       <el-badge
         :value="totalItems"
@@ -127,8 +141,8 @@ watch(
                   class="mini-cart-card"
                   @click="
                     () => {
+                      closeDropdown()
                       navigate()
-                      isDropdownOpen = false
                     }
                   "
                 >
@@ -167,7 +181,12 @@ watch(
             <el-button
               size="small"
               class="view-cart-btn"
-              @click="goToCart"
+              @click="
+                () => {
+                  closeDropdown()
+                  goToCart()
+                }
+              "
               plain
             >
               View Full Cart ({{ totalItems }})
@@ -372,7 +391,7 @@ watch(
 
 .scrollable-wrapper {
   position: relative;
-  max-height: 300px;
+  max-height: 350px;
   overflow: hidden;
 }
 
