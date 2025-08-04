@@ -96,7 +96,7 @@ const { isNewArrival, isBestSeller } = useProductTags()
 </script>
 
 <template>
-  <div class="product-page">
+  <div class="store">
     <div class="products-section">
       <TransitionGroup
         name="fade-slide"
@@ -174,7 +174,7 @@ const { isNewArrival, isBestSeller } = useProductTags()
 </template>
 
 <style scoped>
-.product-page {
+.store {
   display: flex;
   flex-direction: column;
   min-height: 100vh;

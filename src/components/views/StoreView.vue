@@ -3,13 +3,5 @@ import Store from '../Store.vue'
 </script>
 
 <template>
-  <div class="store">
-    <Store />
-  </div>
+  <Store />
 </template>
-
-<style scoped>
-.store {
-  padding: 1rem;
-}
-</style>

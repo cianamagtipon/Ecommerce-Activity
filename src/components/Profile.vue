@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useScreenSize } from '@/composables/screenSize'
 import ProfileSidebar from './profile/ProfileSidebar.vue'
+
+const { isMobile } = useScreenSize()
 </script>
 
 <template>
   <div class="profile-layout">
-    <ProfileSidebar />
+    <ProfileSidebar v-if="!isMobile" />
 
     <div class="profile-main">
       <transition name="fade-slide" mode="out-in" appear>

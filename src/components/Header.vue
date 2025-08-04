@@ -3,6 +3,9 @@ import { useUserStore } from '@/pinia/user'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { SwitchButton } from '@element-plus/icons-vue'
+import { useScreenSize } from '@/composables/screenSize'
+
+const { isMobile } = useScreenSize()
 
 const userStore = useUserStore()
 const { isLoggedIn } = storeToRefs(userStore)
@@ -10,7 +13,6 @@ const router = useRouter()
 
 const emit = defineEmits(['login-clicked', 'logout-clicked'])
 
-// Sign up button now directly routes
 function goToRegister() {
   router.push('/registration')
 }
@@ -54,7 +56,11 @@ function goToRegister() {
       </div>
     </div>
 
-    <el-divider class="tagline" content-position="left">
+    <el-divider v-if="!isMobile" class="tagline" content-position="left">
+      <em>Where Stories Spark Conversations</em>
+    </el-divider>
+
+    <el-divider v-else class="tagline" content-position="center">
       <em>Where Stories Spark Conversations</em>
     </el-divider>
   </div>
@@ -165,11 +171,24 @@ function goToRegister() {
   color: #5d3d2e;
   background-color: white;
   padding: 0 8px;
+  width: 14rem;
+  text-align: center;
+  justify-content: center;
+  display: flex !important;
 }
 
 @media (max-width: 600px) {
   .right {
     display: none;
+  }
+
+  .top-header {
+    justify-content: center;
+  }
+
+  ::v-deep(.el-divider) {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
   }
 }
 </style>
