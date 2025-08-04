@@ -2,9 +2,8 @@
 import { ref, watch, onMounted, computed } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled } from '@element-plus/icons-vue'
+import { HomeFilled, UserFilled } from '@element-plus/icons-vue'
 import { TagIcon, ShoppingCartIcon } from '@heroicons/vue/24/solid'
-import { Bars3Icon } from '@heroicons/vue/24/outline'
 import { useScreenSize } from '@/composables/screenSize'
 import { useUserStore } from '@/pinia/user'
 
@@ -99,6 +98,7 @@ onMounted(syncActiveIndex)
         >
           <el-icon><HomeFilled /></el-icon>
         </div>
+
         <div
           class="mobile-nav-item"
           :class="{ active: activeIndex === '1-2' }"
@@ -106,16 +106,18 @@ onMounted(syncActiveIndex)
         >
           <el-icon><TagIcon /></el-icon>
         </div>
+
+        <div class="mobile-nav-item cart-icon">
+          <CartDropdown />
+        </div>
+
         <div
           v-if="isLoggedIn"
           class="mobile-nav-item"
           :class="{ active: activeIndex === '1-3' }"
           @click="handleSelect('1-3')"
         >
-          <el-icon><ShoppingCartIcon /></el-icon>
-        </div>
-        <div class="mobile-nav-item cart-icon">
-          <CartDropdown />
+          <el-icon><UserFilled /></el-icon>
         </div>
       </div>
     </div>

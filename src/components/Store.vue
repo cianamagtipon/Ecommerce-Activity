@@ -1,31 +1,24 @@
 <script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import StoreSearch from './store/StoreSearch.vue'
-import StoreCards from './store/StoreCards.vue'
 import StoreSidebar from './store/StoreSidebar.vue'
+import StoreCards from './store/StoreCards.vue'
+import { ElDrawer } from 'element-plus'
 
 import { useProductStore } from '@/pinia/products'
-import { onMounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import type { Genre } from '@/types/product'
 
 const productStore = useProductStore()
 const route = useRoute()
 
-onMounted(() => {
-  if (productStore.products.length === 0) {
-    productStore.loadMockData()
-  }
-})
+const drawerVisible = ref(false)
 
-// Get genre from route (optional param)
 const genre = computed(() => route.params.genre as Genre | undefined)
-
-// Search query from route
 const searchQuery = computed(() =>
   ((route.query.q as string) || '').toLowerCase(),
 )
 
-// Filtered products based on query or genre
 const filteredProducts = computed(() => {
   const products = productStore.products
 
@@ -37,16 +30,12 @@ const filteredProducts = computed(() => {
     )
   }
 
-  if (!genre.value || genre.value.toLowerCase() === 'all') {
-    return products
-  }
-
+  if (!genre.value || genre.value.toLowerCase() === 'all') return products
   return products.filter(
     (p) => p.genre.toLowerCase() === genre.value?.toLowerCase(),
   )
 })
 
-// Scroll to product grid when genre or query changes
 function scrollToGrid() {
   const grid = document.querySelector('.product-grid')
   grid?.scrollIntoView({ behavior: 'smooth' })
@@ -54,16 +43,42 @@ function scrollToGrid() {
 
 watch(() => route.params.genre, scrollToGrid)
 watch(() => route.query.q, scrollToGrid)
+
+onMounted(() => {
+  if (productStore.products.length === 0) {
+    productStore.loadMockData()
+  }
+})
 </script>
 
 <template>
   <div class="store-layout">
-    <div class="sidebar-container">
+    <!-- Drawer toggle button (mobile only) -->
+    <button class="drawer-toggle" @click="drawerVisible = true">
+      Filters & Search
+    </button>
+
+    <!-- Sidebar shown on desktop only -->
+    <div class="sidebar-container desktop-only">
       <StoreSearch />
       <StoreSidebar />
     </div>
 
-    <!-- Main content -->
+    <!-- Drawer on mobile -->
+    <el-drawer
+      v-model="drawerVisible"
+      direction="ltr"
+      size="80%"
+      :with-header="false"
+      class="mobile-drawer"
+    >
+      <div class="sidebar-container">
+        <StoreSearch />
+        <StoreSidebar />
+      </div>
+    </el-drawer>
+
+    <!-- Main product area -->
     <div class="main-content">
       <transition name="fade" mode="out-in" appear>
         <div :key="genre + searchQuery">
@@ -80,14 +95,19 @@ watch(() => route.query.q, scrollToGrid)
 .store-layout {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .sidebar-container {
-  width: 240px;
+  width: 220px;
+  min-width: 200px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-right: 1.5rem;
+  gap: 0.75rem;
   margin-top: 1rem;
 }
 
@@ -98,14 +118,49 @@ watch(() => route.query.q, scrollToGrid)
   padding-right: 1rem;
 }
 
+/* Drawer toggle button (mobile only) */
+.drawer-toggle {
+  display: none;
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background-color: #5d3d2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Transition */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
   transform: translateY(16px);
+}
+
+/* MOBILE STYLES */
+@media (max-width: 768px) {
+  .store-layout {
+    flex-direction: column;
+    max-width: 100%;
+  }
+
+  .drawer-toggle {
+    display: inline-block;
+    align-self: flex-start;
+    margin-left: 1rem;
+  }
+
+  .sidebar-container.desktop-only {
+    display: none;
+  }
+
+  .main-content {
+    padding: 0 1rem;
+  }
 }
 </style>
