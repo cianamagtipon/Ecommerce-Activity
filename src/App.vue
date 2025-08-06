@@ -8,13 +8,11 @@ import { ref, onBeforeMount, onUnmounted, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
-import { storeToRefs } from 'pinia'
 
 const userStore = useUserStore()
 const cartStore = useCartStore()
 const router = useRouter()
 
-const { isLoggedIn, name } = storeToRefs(userStore)
 const loginJustSucceeded = ref(false)
 
 const showLogin = ref(false)
@@ -24,7 +22,7 @@ function openLogin() {
 }
 
 function openRegister() {
-  router.push('/register') // redirect to Register view
+  router.push('/register')
 }
 
 window.openLoginModal = () => {
@@ -112,7 +110,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Login Modal -->
     <Login
       v-model:dialog-visible="showLogin"
       @login-success="loginJustSucceeded = true"
