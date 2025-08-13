@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormItemRule } from 'element-plus'
 import { useUserStore } from '@/pinia/user'
-import { useValidationRules } from '@/composables/validationRules'
 import { useFormatter } from '@/composables/formatter'
 import { useLocationSearch } from '@/composables/locationSearch'
+import { useValidationRules } from '@/composables/validationRules'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -16,12 +16,13 @@ const {
   passwordRule,
   phoneRule,
   postalCodeRule,
+  homeRule,
   passwordMatch,
+  validateSingleField,
 } = useValidationRules()
 
-const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail, formatForm } =
+const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail } =
   useFormatter()
-
 const {
   findCityByZipPrefix,
   getCitiesByProvince,
@@ -51,35 +52,23 @@ const formRef = ref()
 const loading = ref(false)
 const isAutofillingFromZip = ref(false)
 
-const rules = {
-  name: [
-    required,
-    ...nameRule,
-    {
-      validator: (
-        _rule: any,
-        value: string,
-        callback: (err?: Error) => void,
-      ) => {
-        if (!value) return callback()
-      },
-      trigger: 'blur',
-    },
-  ],
-  email: [required, ...emailRule],
-  password: [required, ...passwordRule],
+// Form rules using your composable
+const rules: Record<string, FormItemRule[]> = {
+  name: nameRule,
+  email: emailRule,
+  password: passwordRule,
   confirmPassword: [required, passwordMatch(() => form.value.password)],
-  phone: [...phoneRule],
-  'address.province': [],
-  'address.city': [],
-  'address.home': [],
+  phone: phoneRule,
+  'address.province': [required],
+  'address.city': [required],
+  'address.home': [...homeRule],
   'address.postalCode': postalCodeRule(
     () => form.value.address.province,
     () => form.value.address.city,
   ),
 }
 
-// watch ZIP to auto-fill province/city
+// Auto-fill province/city from ZIP
 watch(
   () => form.value.address.postalCode,
   (zip) => {
@@ -90,14 +79,12 @@ watch(
       form.value.address.province = match.province
       cities.value = getCitiesByProvince(match.province)
       form.value.address.city = match.city
-      setTimeout(() => {
-        isAutofillingFromZip.value = false
-      }, 0)
+      setTimeout(() => (isAutofillingFromZip.value = false), 0)
     }
   },
 )
 
-// watch province to load cities
+// Load cities when province changes
 watch(
   () => form.value.address.province,
   (newProvince) => {
@@ -109,7 +96,7 @@ watch(
   { immediate: true },
 )
 
-// clear zip if province/city are cleared
+// Clear postal code if province/city are cleared
 watch(
   [() => form.value.address.province, () => form.value.address.city],
   ([newProvince, newCity]) => {
@@ -133,18 +120,14 @@ function handleZipSelect(item: { value: string }) {
     form.value.address.province = location.province
     cities.value = getCitiesByProvince(location.province)
     form.value.address.city = location.city
-    setTimeout(() => {
-      isAutofillingFromZip.value = false
-    }, 0)
+    setTimeout(() => (isAutofillingFromZip.value = false), 0)
   }
 }
 
 function blurFormatField(fieldPath: string) {
   const segments = fieldPath.split('.')
   let target: any = form.value
-  for (let i = 0; i < segments.length - 1; i++) {
-    target = target[segments[i]]
-  }
+  for (let i = 0; i < segments.length - 1; i++) target = target[segments[i]]
   const key = segments[segments.length - 1]
   if (typeof target[key] === 'string') {
     let val = target[key]
@@ -166,10 +149,38 @@ function blurFormatField(fieldPath: string) {
 }
 
 async function handleRegister() {
-  console.log('[handleRegister] clicked')
   loading.value = true
-
   try {
+    const fieldsToCheck = [
+      { value: form.value.name, rules: rules.name },
+      { value: form.value.email, rules: rules.email },
+      { value: form.value.password, rules: rules.password },
+      { value: form.value.confirmPassword, rules: rules.confirmPassword },
+      { value: form.value.phone, rules: rules.phone },
+      { value: form.value.address.province, rules: rules['address.province'] },
+      { value: form.value.address.city, rules: rules['address.city'] },
+      { value: form.value.address.home, rules: rules['address.home'] },
+      {
+        value: form.value.address.postalCode,
+        rules: rules['address.postalCode'],
+      },
+    ]
+
+    for (const field of fieldsToCheck) {
+      const error = await validateSingleField(field.value, field.rules)
+      if (error) {
+        ElMessage.closeAll()
+
+        const errorMessage =
+          error === 'This is a required field'
+            ? 'Please complete all required fields'
+            : 'Please correct the form errors before proceeding'
+        ElMessage.error(errorMessage)
+        loading.value = false
+        return
+      }
+    }
+
     const success = await userStore.register({
       name: form.value.name,
       email: form.value.email,
@@ -183,8 +194,6 @@ async function handleRegister() {
       },
       userOrders: [],
     })
-
-    console.log('[handleRegister] success?', success)
 
     if (!success) {
       ElMessage.error('Account already exists.')

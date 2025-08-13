@@ -22,6 +22,7 @@ const {
   emailRule,
   passwordRule,
   phoneRule,
+  homeRule,
   postalCodeRule,
   passwordMatch,
   validateSingleField,
@@ -29,7 +30,6 @@ const {
 
 const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail } =
   useFormatter()
-
 const { findCityByZipPrefix, getCitiesByProvince, getAllProvinces } =
   useLocationSearch()
 
@@ -49,6 +49,20 @@ const editablePassword = ref({
   confirmPassword: '',
 })
 
+const editableForm = ref({
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  address: {
+    province: '',
+    city: '',
+    home: '',
+    zip: '',
+  },
+})
+
 const formRules: Record<string, FormItemRule[] | undefined> = {
   name: [required, ...nameRule],
   email: [required, ...emailRule],
@@ -62,9 +76,9 @@ const formRules: Record<string, FormItemRule[] | undefined> = {
     () => editableForm.value.address.province,
     () => editableForm.value.address.city,
   ),
-  'address.city': [],
-  'address.province': [],
-  'address.home': [],
+  'address.city': [required],
+  'address.province': [required],
+  'address.home': [...homeRule],
 }
 
 const fieldValidity = ref<Record<string, boolean>>({
@@ -73,20 +87,6 @@ const fieldValidity = ref<Record<string, boolean>>({
   password: true,
   phone: true,
   address: true,
-})
-
-const editableForm = ref({
-  name: '',
-  email: '',
-  phone: '',
-  password: '',
-  confirmPassword: '',
-  address: {
-    province: '',
-    city: '',
-    home: '',
-    zip: '',
-  },
 })
 
 onMounted(() => {
@@ -141,12 +141,8 @@ watch(
 function blurFormatField(fieldPath: string) {
   const segments = fieldPath.split('.')
   let target: any = editableForm.value
-  for (let i = 0; i < segments.length - 1; i++) {
-    target = target[segments[i]]
-  }
-
+  for (let i = 0; i < segments.length - 1; i++) target = target[segments[i]]
   const key = segments[segments.length - 1]!
-
   if (typeof target[key] === 'string') {
     let val = target[key]
     switch (key) {
@@ -174,7 +170,6 @@ function getFullAddress() {
 async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
   const current = userStore.currentUser
   if (!current) return
-
   const clean = (val: string | undefined) => cleanSpaces(val || '')
 
   let currentValue, newValue
@@ -186,36 +181,31 @@ async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
       province: clean(current.address?.province),
       zip: removeAllSpaces(current.address?.zip ?? ''),
     })
-
     newValue = JSON.stringify({
       home: clean(editableForm.value.address.home),
       city: clean(editableForm.value.address.city),
       province: clean(editableForm.value.address.province),
       zip: removeAllSpaces(editableForm.value.address.zip),
     })
-
     if (currentValue === newValue) return
   } else {
     const editedVal = clean(editableForm.value[field])
     const existingVal = clean(current[field])
-
     newValue =
       field === 'email'
         ? formatEmail(editedVal)
         : field === 'phone'
           ? formatPhone(editedVal)
           : editedVal
-
     currentValue =
       field === 'email'
         ? formatEmail(existingVal)
         : field === 'phone'
           ? formatPhone(existingVal)
           : existingVal
-
     if (currentValue === newValue) return
-
     if ((field === 'name' || field === 'email') && !newValue) {
+      ElMessage.closeAll()
       ElMessage.error(
         `${field[0].toUpperCase() + field.slice(1)} cannot be empty`,
       )
@@ -226,12 +216,8 @@ async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
   loading.value = true
   try {
     const updateData: any = {}
-
-    if (field === 'address') {
-      updateData.address = JSON.parse(newValue)
-    } else {
-      updateData[field] = newValue
-    }
+    if (field === 'address') updateData.address = JSON.parse(newValue)
+    else updateData[field] = newValue
 
     await userStore.updateUserData(updateData)
 
@@ -239,10 +225,12 @@ async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
       Object.assign(editableForm.value.address, userStore.currentUser?.address)
     }
 
+    ElMessage.closeAll()
     ElMessage.success(
       `${field[0].toUpperCase() + field.slice(1)} updated successfully!`,
     )
   } catch (e) {
+    ElMessage.closeAll()
     ElMessage.error(
       `Update failed: ${e instanceof Error ? e.message : 'Unknown error'}`,
     )
@@ -255,7 +243,6 @@ async function saveField(field: 'name' | 'email' | 'phone' | 'address') {
 async function hasChanges(field: 'name' | 'email' | 'phone' | 'address') {
   const current = userStore.currentUser
   if (!current) return false
-
   const clean = (val: string | undefined) => cleanSpaces(val || '')
 
   if (field === 'address') {
@@ -265,14 +252,12 @@ async function hasChanges(field: 'name' | 'email' | 'phone' | 'address') {
       province: clean(current.address?.province),
       zip: removeAllSpaces(current.address?.zip ?? ''),
     })
-
     const newAddress = JSON.stringify({
       home: clean(editableForm.value.address.home),
       city: clean(editableForm.value.address.city),
       province: clean(editableForm.value.address.province),
       zip: removeAllSpaces(editableForm.value.address.zip),
     })
-
     return currentAddress !== newAddress
   }
 
@@ -294,69 +279,49 @@ async function hasChanges(field: 'name' | 'email' | 'phone' | 'address') {
 }
 
 async function toggleEdit(field: 'name' | 'email' | 'phone' | 'address') {
-  const validateAndSave = async (fieldName: string, flag: Ref<boolean>) => {
-    if (!flag.value) {
-      flag.value = true
-      return
-    }
+  const fieldRefMap: Record<string, Ref<boolean>> = {
+    name: isEditingName,
+    email: isEditingEmail,
+    phone: isEditingPhone,
+    address: isEditingAddress,
+  }
+  const flag = fieldRefMap[field]
 
-    const changed = await hasChanges(fieldName as any)
-    if (!changed) {
-      flag.value = false
-      return
-    }
+  if (!flag.value) {
+    flag.value = true
+    return
+  }
 
-    const validateTarget = fieldName === 'address' ? 'address.zip' : fieldName
+  const changed = await hasChanges(field)
+  if (!changed) {
+    flag.value = false
+    return
+  }
 
-    const segments = validateTarget.split('.')
+  let fieldsToValidate: string[] = []
+  if (field === 'address') {
+    fieldsToValidate = [
+      'address.province',
+      'address.city',
+      'address.home',
+      'address.zip',
+    ]
+  } else fieldsToValidate = [field]
+
+  for (const key of fieldsToValidate) {
+    const segments = key.split('.')
     let value: any = editableForm.value
-    for (const key of segments) {
-      value = value?.[key]
-    }
-
-    // reset if empty for non-address fields
-    const isEmpty =
-      fieldName !== 'address' &&
-      fieldName !== 'phone' &&
-      typeof value === 'string' &&
-      value.trim() === ''
-
-    if (isEmpty) {
-      const original = userStore.currentUser
-      ;(editableForm.value as any)[fieldName] =
-        (original as any)?.[fieldName] || ''
-      flag.value = false
-      return
-    }
-
-    const rules = formRules[validateTarget] || []
+    for (const seg of segments) value = value?.[seg]
+    const rules = formRules[key] || []
     const errorMessage = await validateSingleField(value, rules)
-
-    fieldValidity.value[fieldName] = !errorMessage
-
     if (errorMessage) {
       ElMessage.error(errorMessage)
       return
     }
-
-    await saveField(fieldName as any)
-    flag.value = false
   }
 
-  switch (field) {
-    case 'name':
-      await validateAndSave('name', isEditingName)
-      break
-    case 'email':
-      await validateAndSave('email', isEditingEmail)
-      break
-    case 'phone':
-      await validateAndSave('phone', isEditingPhone)
-      break
-    case 'address':
-      await validateAndSave('address', isEditingAddress)
-      break
-  }
+  await saveField(field)
+  flag.value = false
 }
 
 async function togglePasswordEdit() {
@@ -367,7 +332,6 @@ async function togglePasswordEdit() {
 
   const { password, confirmPassword } = editablePassword.value
 
-  // if both fields are empty, skip validation and just close edit mode
   if (!password && !confirmPassword) {
     isEditingPassword.value = false
     editablePassword.value.password = ''
@@ -375,28 +339,24 @@ async function togglePasswordEdit() {
     return
   }
 
-  // proceed with validation if any field is filled
   const passwordError = await validateSingleField(password, passwordRule)
   const confirmError = await validateSingleField(confirmPassword, [
     required,
     passwordMatch(() => password),
   ])
 
-  if (passwordError) {
-    ElMessage.error(passwordError)
-    return
-  }
+  const formatError = (error: string) =>
+    error === 'This is a required field'
+      ? 'Please complete all required fields'
+      : error
 
-  if (confirmError) {
-    ElMessage.error(confirmError)
-    return
-  }
+  if (passwordError) return ElMessage.error(formatError(passwordError))
+  if (confirmError) return ElMessage.error(formatError(confirmError))
 
   loading.value = true
   try {
     await userStore.updateUserData({ password })
     ElMessage.success('Password updated successfully')
-
     editablePassword.value.password = ''
     editablePassword.value.confirmPassword = ''
     isEditingPassword.value = false

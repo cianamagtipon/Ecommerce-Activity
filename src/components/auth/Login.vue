@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { useUserStore } from '@/pinia/user'
@@ -26,30 +26,22 @@ watch(
   },
 )
 
-watch(dialogVisible, (visible) => {
-  if (!visible && loginFormRef.value) {
-    loginFormRef.value.resetFields()
-  }
-
-  if (loginFormRef.value) {
-    loginFormRef.value.resetFields()
-  }
-})
-
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 
 const loginFormRef = ref<FormInstance | null>(null)
 
+const passwordInputKey = ref(0)
+
 function closeDialog() {
   emit('update:dialogVisible', false)
   email.value = ''
   password.value = ''
+  loginFormRef.value?.resetFields()
 
-  if (loginFormRef.value) {
-    loginFormRef.value.resetFields()
-  }
+  // force password field remount to reset show-password state
+  passwordInputKey.value++
 }
 
 async function handleLogin() {
@@ -67,6 +59,7 @@ async function handleLogin() {
       ElMessage.success('Login successful!')
       emit('login-success')
       closeDialog()
+      window.location.reload()
     } else {
       ElMessage.error('Invalid email or password')
     }
@@ -80,17 +73,21 @@ function goToRegister() {
   router.push('/registration')
 }
 
-// Responsive dialog width
+// responsive dialog width
 const dialogWidth = ref(getDialogWidth())
+
 function getDialogWidth() {
   return window.innerWidth < 600 ? '90vw' : '450px'
 }
+
 function handleResize() {
   dialogWidth.value = getDialogWidth()
 }
+
 onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
+
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
@@ -118,10 +115,7 @@ onUnmounted(() => {
       <el-form
         ref="loginFormRef"
         :model="{ email, password }"
-        :rules="{
-          email: emailRule,
-          password: passwordRule,
-        }"
+        :rules="{ email: emailRule, password: passwordRule }"
         label-position="top"
         class="login-form"
       >
@@ -135,28 +129,25 @@ onUnmounted(() => {
             @keydown.enter.prevent="handleLogin"
           >
             <template #prefix>
-              <el-icon>
-                <Message />
-              </el-icon>
+              <el-icon><Message /></el-icon>
             </template>
           </el-input>
         </el-form-item>
 
         <el-form-item prop="password">
           <el-input
+            :key="passwordInputKey"
             v-model="password"
-            show-password
             type="password"
             autocomplete="off"
             size="large"
             placeholder="Password"
             clearable
+            show-password
             @keydown.enter.prevent="handleLogin"
           >
             <template #prefix>
-              <el-icon>
-                <Lock />
-              </el-icon>
+              <el-icon><Lock /></el-icon>
             </template>
           </el-input>
         </el-form-item>
@@ -170,9 +161,9 @@ onUnmounted(() => {
 
     <template #footer>
       <div class="footer-buttons">
-        <el-button class="cancel-btn" @click="closeDialog" :disabled="loading"
-          >Cancel</el-button
-        >
+        <el-button class="cancel-btn" @click="closeDialog" :disabled="loading">
+          Cancel
+        </el-button>
         <el-button
           type="primary"
           class="login-btn"

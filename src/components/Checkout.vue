@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  ElMessage,
+  ElMessageBox,
+  type FormInstance,
+  type FormItemRule,
+} from 'element-plus'
 import { Check, Edit } from '@element-plus/icons-vue'
 
 import { useUserStore } from '@/pinia/user'
 import { useCheckoutStore } from '@/pinia/checkout'
 import { useCartStore } from '@/pinia/cart'
 import { useOrderStore } from '@/pinia/orders'
-import type { FormInstance } from 'element-plus'
-
 import OrderSummary from './OrderSummary.vue'
 
 import { useValidationRules } from '@/composables/validationRules'
@@ -22,7 +25,8 @@ const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const router = useRouter()
 
-const { required, phoneRule, postalCodeRule } = useValidationRules()
+const { required, phoneRule, postalCodeRule, homeRule, validateSingleField } =
+  useValidationRules()
 const { cleanSpaces, removeAllSpaces, formatPhone, formatEmail } =
   useFormatter()
 const { findCityByZipPrefix, getCitiesByProvince, getAllProvinces } =
@@ -31,7 +35,6 @@ const { findCityByZipPrefix, getCitiesByProvince, getAllProvinces } =
 const provinces = getAllProvinces()
 const cities = ref<string[]>([])
 const isAutofillingFromZip = ref(false)
-
 const isEditingPhone = ref(false)
 const isEditingAddress = ref(false)
 const loading = ref(false)
@@ -51,13 +54,22 @@ const editableForm = ref({
   notes: '',
 })
 
+const formRules: Record<string, FormItemRule[]> = {
+  phone: [...phoneRule],
+  'address.province': [required],
+  'address.city': [required],
+  'address.home': [...homeRule],
+  'address.zip': postalCodeRule(
+    () => editableForm.value.address.province,
+    () => editableForm.value.address.city,
+  ),
+}
+
 watch(
   () => editableForm.value.address.province,
   (newProvince) => {
     cities.value = getCitiesByProvince(newProvince)
-    if (!isAutofillingFromZip.value) {
-      editableForm.value.address.city = ''
-    }
+    if (!isAutofillingFromZip.value) editableForm.value.address.city = ''
   },
   { immediate: true },
 )
@@ -72,9 +84,7 @@ watch(
       editableForm.value.address.province = match.province
       cities.value = getCitiesByProvince(match.province)
       editableForm.value.address.city = match.city
-      setTimeout(() => {
-        isAutofillingFromZip.value = false
-      }, 0)
+      setTimeout(() => (isAutofillingFromZip.value = false), 0)
     }
   },
 )
@@ -94,9 +104,7 @@ watch(
 function blurFormatField(fieldPath: string) {
   const segments = fieldPath.split('.')
   let target: any = editableForm.value
-  for (let i = 0; i < segments.length - 1; i++) {
-    target = target[segments[i]]
-  }
+  for (let i = 0; i < segments.length - 1; i++) target = target[segments[i]]
   const key = segments[segments.length - 1]
   if (typeof target[key] === 'string') {
     let val = target[key]
@@ -136,7 +144,6 @@ async function saveField(field: 'phone' | 'address') {
               zip: removeAllSpaces(editableForm.value.address.zip),
             },
           }
-
     await userStore.updateUserData(updateData)
     ElMessage.success(
       `${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`,
@@ -150,12 +157,24 @@ async function saveField(field: 'phone' | 'address') {
   }
 }
 
-function toggleEdit(field: 'phone' | 'address') {
+async function toggleEdit(field: 'phone' | 'address') {
   if (field === 'phone') {
-    if (isEditingPhone.value) saveField('phone')
+    if (isEditingPhone.value) {
+      const currentPhone = cleanSpaces(editableForm.value.phone)
+      const error = await validateSingleField(currentPhone, formRules.phone)
+      if (error) return ElMessage.error(error)
+      await saveField('phone')
+    }
     isEditingPhone.value = !isEditingPhone.value
   } else if (field === 'address') {
-    if (isEditingAddress.value) saveField('address')
+    if (isEditingAddress.value) {
+      for (const f of ['province', 'city', 'home', 'zip'] as const) {
+        const val = editableForm.value.address[f]
+        const error = await validateSingleField(val, formRules[`address.${f}`])
+        if (error) return ElMessage.error(error)
+      }
+      await saveField('address')
+    }
     isEditingAddress.value = !isEditingAddress.value
   }
 }
@@ -172,32 +191,23 @@ async function placeOrder() {
   const { province, city, home, zip } = editableForm.value.address
   if (!province || !city || !home || !zip) {
     isEditingAddress.value = true
-    ElMessage.error(
+    return ElMessage.error(
       'Please complete your shipping address before placing an order.',
     )
-    return
-  }
-
-  const valid = await formRef.value?.validate()
-  if (!valid) {
-    ElMessage.error('Please correct the form errors before placing an order.')
-    return
   }
 
   if (isEditingAddress.value || isEditingPhone.value) {
-    ElMessage.error(
+    return ElMessage.error(
       'Please save your contact and address info before placing an order.',
     )
-    return
   }
 
-  // basic confirmation message
   const totalAmount = selectedItems.value.reduce((sum, item) => {
     const discounted = item.product.retail * (1 - item.product.discount / 100)
     return sum + discounted * item.quantity
   }, 0)
 
-  const address = `${editableForm.value.address.home}, ${editableForm.value.address.city}, ${editableForm.value.address.province}. ${editableForm.value.address.zip}`
+  const address = `${home}, ${city}, ${province}. ${zip}`
 
   try {
     await ElMessageBox.confirm(
@@ -215,7 +225,6 @@ async function placeOrder() {
       },
     )
   } catch {
-    // user canceled
     return
   }
 
@@ -227,10 +236,10 @@ async function placeOrder() {
       email: formatEmail(editableForm.value.email),
       phone: formatPhone(cleanSpaces(editableForm.value.phone)),
       address: {
-        province: cleanSpaces(editableForm.value.address.province),
-        city: cleanSpaces(editableForm.value.address.city),
-        home: cleanSpaces(editableForm.value.address.home),
-        zip: removeAllSpaces(editableForm.value.address.zip),
+        province: cleanSpaces(province),
+        city: cleanSpaces(city),
+        home: cleanSpaces(home),
+        zip: removeAllSpaces(zip),
       },
     })
 
@@ -244,7 +253,6 @@ async function placeOrder() {
     cartStore.selectedISBNs.clear()
     cartStore.saveCartToStorage()
     cartStore.clearSelected()
-
     checkoutStore.clearSelectedItems()
 
     ElMessage.success('Order placed successfully!')
@@ -261,13 +269,9 @@ async function placeOrder() {
 onMounted(() => {
   if (checkoutStore.selectedItems.length === 0) {
     const savedOrder = localStorage.getItem('currentOrder')
-    if (savedOrder) {
-      const parsedItems = JSON.parse(savedOrder)
-      checkoutStore.setSelectedItems(parsedItems)
-    }
+    if (savedOrder) checkoutStore.setSelectedItems(JSON.parse(savedOrder))
   }
 
-  // rehydrate editableForm from userStore after data load
   editableForm.value = {
     name: userStore.name ?? '',
     email: userStore.email ?? '',
@@ -281,15 +285,11 @@ onMounted(() => {
     notes: '',
   }
 
-  // update city list if province exists
-  if (userStore.address?.province) {
+  if (userStore.address?.province)
     cities.value = getCitiesByProvince(userStore.address.province)
-  }
 })
 
-onBeforeRouteLeave(() => {
-  checkoutStore.clearSelectedItems()
-})
+onBeforeRouteLeave(() => checkoutStore.clearSelectedItems())
 </script>
 
 <template>
@@ -360,7 +360,9 @@ onBeforeRouteLeave(() => {
             </div>
 
             <template v-if="!isEditingPhone">
-              <div class="readonly-text">{{ editableForm.phone || 'N/A' }}</div>
+              <div class="readonly-text">
+                {{ editableForm.phone ? '+63' + editableForm.phone : 'N/A' }}
+              </div>
             </template>
             <template v-else>
               <el-input

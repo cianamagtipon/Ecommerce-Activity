@@ -85,6 +85,7 @@ export const useUserStore = defineStore('user', {
     logout() {
       this.currentUser = null
       localStorage.removeItem('CurrentUser')
+      localStorage.setItem('logout', Date.now().toString())
       console.info('[UserStore] Logged out successfully.')
     },
 

@@ -6,22 +6,23 @@ const typedLocations: LuzonLocations = luzonLocations
 
 export function useValidationRules() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const postalCodeRegex = /^\d{4}$/
   const nameRegex = /^[A-Za-z\s]{2,}$/
   const phoneRegex = /^9\d{9}$/
-
+  const homeRegex = /^[A-Za-z0-9\s\-#]+$/
+  const postalCodeRegex = /^\d{4}$/
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/
 
+  // Always validate required fields on both blur and change
   const required: FormItemRule = {
     required: true,
-    message: 'This field is required',
-    trigger: 'blur',
+    message: 'This is a required field',
+    trigger: ['blur', 'change'],
   }
 
   const requiredSelect: FormItemRule = {
     required: true,
-    message: 'This field is required',
-    trigger: 'change',
+    message: 'This is a required field',
+    trigger: ['blur', 'change'],
   }
 
   const nameRule: FormItemRule[] = [
@@ -29,7 +30,7 @@ export function useValidationRules() {
     {
       pattern: nameRegex,
       message: 'Must be at least 2 characters with only letters and spaces',
-      trigger: 'blur',
+      trigger: ['blur', 'change'],
     },
   ]
 
@@ -38,7 +39,7 @@ export function useValidationRules() {
     {
       pattern: emailRegex,
       message: 'Email must be valid (e.g., user@example.com)',
-      trigger: 'blur',
+      trigger: ['blur', 'change'],
     },
   ]
 
@@ -47,12 +48,12 @@ export function useValidationRules() {
     {
       pattern: passwordRegex,
       message: 'Password must be at least 8 characters and include a number',
-      trigger: 'blur',
+      trigger: ['blur', 'change'],
     },
   ]
 
   const passwordMatch = (getPassword: () => string): FormItemRule => ({
-    validator: (_rule, value, callback, _source, _options) => {
+    validator: (_rule, value, callback) => {
       if (!value) {
         callback(new Error('Please confirm your password'))
       } else if (value !== getPassword()) {
@@ -61,9 +62,10 @@ export function useValidationRules() {
         callback()
       }
     },
-    trigger: 'blur',
+    trigger: ['blur', 'change'],
   })
 
+  // Optional fields skip if empty, but validate immediately if filled
   const optionalPattern = (pattern: RegExp, message: string): FormItemRule => ({
     validator: (_rule, value, callback) => {
       if (!value || value === '') {
@@ -74,7 +76,7 @@ export function useValidationRules() {
         callback()
       }
     },
-    trigger: 'blur',
+    trigger: ['blur', 'change'],
   })
 
   const phoneRule: FormItemRule[] = [
@@ -83,7 +85,15 @@ export function useValidationRules() {
 
   const provinceRule: FormItemRule[] = []
   const cityRule: FormItemRule[] = []
-  const homeRule: FormItemRule[] = []
+  const homeRule: FormItemRule[] = [
+    { ...required },
+    {
+      pattern: homeRegex,
+      message:
+        'House/Unit must only contain letters, numbers, spaces, dashes, or #',
+      trigger: ['blur', 'change'],
+    },
+  ]
 
   const postalCodeRule = (
     getProvince: () => string,
@@ -118,7 +128,7 @@ export function useValidationRules() {
 
         callback()
       },
-      trigger: ['change', 'blur'],
+      trigger: ['blur', 'change'],
     },
   ]
 
@@ -164,7 +174,7 @@ export function useValidationRules() {
       ) {
         return typeof rule.message === 'string'
           ? rule.message
-          : 'This field is required'
+          : 'This is a required field'
       }
 
       // Pattern check
@@ -177,7 +187,7 @@ export function useValidationRules() {
         }
       }
 
-      // Custom validator check (async)
+      // Custom validator check
       if (rule.validator) {
         try {
           await new Promise<void>((resolve, reject) => {

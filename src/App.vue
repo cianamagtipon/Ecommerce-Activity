@@ -40,7 +40,9 @@ function handleDialogClosed() {
 
 function handleLogout() {
   userStore.logout()
-  router.push('/home')
+  router.push('/home').then(() => {
+    location.reload()
+  })
 }
 
 const route = useRoute()
@@ -67,6 +69,16 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
+  // listens for logout on other tabs
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'logout') {
+      userStore.currentUser = null
+      router.push('/home').then(() => {
+        location.reload()
+      })
+    }
+  })
+
   router.afterEach(() => {
     const main = document.querySelector('.main')
     if (main) {
