@@ -12,6 +12,7 @@ import Orders from '@/components/profile/Orders.vue'
 
 import { useUserStore } from '@/pinia/user'
 import { useCartStore } from '@/pinia/cart'
+import { useCheckoutStore } from '@/pinia/checkout'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,6 +48,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const cartStore = useCartStore()
+  const checkoutStore = useCheckoutStore()
 
   const protectedRoutes = [
     '/profile',
@@ -72,7 +74,27 @@ router.beforeEach((to, from, next) => {
     return next('/home')
   }
 
+  // Reroute checkout if there are no selected items
+  if (to.path === '/checkout' && checkoutStore.selectedItems.length === 0) {
+    return next('/home')
+  }
+
   next()
+})
+
+// Clear checkout and cart selected items when leaving /checkout or /cart
+router.afterEach((to, from) => {
+  const checkoutStore = useCheckoutStore()
+  const cartStore = useCartStore()
+
+  if (from.path === '/checkout' && to.path !== '/checkout') {
+    checkoutStore.clearSelectedItems()
+    cartStore.clearSelected?.() ?? cartStore.selectedISBNs.clear()
+  }
+
+  if (from.path === '/cart' && to.path !== '/cart') {
+    cartStore.clearSelected?.() ?? cartStore.selectedISBNs.clear()
+  }
 })
 
 export default router

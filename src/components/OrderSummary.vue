@@ -13,6 +13,7 @@ const route = useRoute()
 
 const userStore = useUserStore()
 const cartStore = useCartStore()
+const checkoutStore = useCheckoutStore()
 
 const props = defineProps<{
   selectedItems?: { product: Product; quantity: number }[]
@@ -25,13 +26,8 @@ const emit = defineEmits<{
   (e: 'login-clicked'): void
 }>()
 
-const checkoutStore = useCheckoutStore()
-
-const selectedItems = computed(() =>
-  props.selectedItems?.length
-    ? props.selectedItems
-    : checkoutStore.selectedItems,
-)
+// Only use props.selectedItems, default to empty array
+const selectedItems = computed(() => props.selectedItems || [])
 
 const orderTotal = computed(() =>
   selectedItems.value.reduce((sum, item) => {
@@ -54,29 +50,27 @@ function getRowClassName({ rowIndex }: { rowIndex: number }) {
 
 async function handleCheckout() {
   if (!userStore.currentUser) {
-    // trigger login when logged out
     window.openLoginModal?.()
     return
   }
 
-  // if in checkout: place order
+  // If already in checkout, place order
   if (route.name === 'checkout') {
     if (props.formRef) {
       try {
         await props.formRef.validate()
         emit('button-click')
 
-        // clear items when order is placed
+        // Remove purchased items from cart
         const selectedISBNs = checkoutStore.selectedItems.map(
           (item) => item.product.isbn,
         )
         selectedISBNs.forEach((isbn) => cartStore.removeFromCart(isbn))
         cartStore.saveCartToStorage()
 
-        // clear checkout state
         checkoutStore.clearSelectedItems()
         localStorage.removeItem('currentOrder')
-      } catch (err) {
+      } catch {
         ElMessage.error('Please complete all required fields.')
       }
     } else {
@@ -85,9 +79,13 @@ async function handleCheckout() {
     return
   }
 
-  // go to checkout
-  checkoutStore.setSelectedItems(selectedItems.value)
-  router.push('/checkout')
+  // Only set checkout items if user actually clicked Checkout
+  if (selectedItems.value.length > 0) {
+    checkoutStore.setSelectedItems(selectedItems.value)
+    router.push('/checkout')
+  } else {
+    ElMessage.warning('No items selected for checkout.')
+  }
 }
 </script>
 
