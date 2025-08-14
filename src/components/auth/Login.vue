@@ -1,14 +1,38 @@
 <script setup lang="ts">
+import router from '@/router'
+
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { useUserStore } from '@/pinia/user'
-import { useValidationRules } from '@/composables/validationRules'
 import { Message, Lock } from '@element-plus/icons-vue'
-import router from '@/router'
+
+import { useFormatter } from '@/composables/formatter'
+
+const { formatEmail } = useFormatter()
+
+// validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/
+
+// manual rules (overriding validation composable)
+const emailRule = [
+  { required: true, message: 'Email is required', trigger: 'manual' },
+  {
+    pattern: emailRegex,
+    message: 'Email must be valid (e.g., user@example.com)',
+  },
+]
+
+const passwordRule = [
+  { required: true, message: 'Password is required', trigger: 'manual' },
+  {
+    pattern: passwordRegex,
+    message: 'Password must be at least 8 characters and include a number',
+  },
+]
 
 const userStore = useUserStore()
-const { emailRule, passwordRule } = useValidationRules()
 
 const props = defineProps<{ dialogVisible: boolean }>()
 const emit = defineEmits<{
@@ -26,34 +50,64 @@ watch(
   },
 )
 
-const email = ref('')
-const password = ref('')
+// form model for Element Plus
+const formModel = ref({ email: '', password: '' })
+const emailInput = ref('')
+const passwordInput = ref('')
+
+// dirty flags to track user typing
+const emailDirty = ref(false)
+const passwordDirty = ref(false)
+
+// mark email as dirty
+function markEmailDirty() {
+  emailDirty.value = true
+}
+
+// mark password as dirty
+function markPasswordDirty() {
+  passwordDirty.value = true
+}
+
+function onEmailBlur() {
+  emailInput.value = formatEmail(emailInput.value)
+}
+
 const loading = ref(false)
-
 const loginFormRef = ref<FormInstance | null>(null)
-
 const passwordInputKey = ref(0)
 
 function closeDialog() {
   emit('update:dialogVisible', false)
-  email.value = ''
-  password.value = ''
+  emailInput.value = ''
+  passwordInput.value = ''
+  emailDirty.value = false
+  passwordDirty.value = false
   loginFormRef.value?.resetFields()
-
-  // force password field remount to reset show-password state
-  passwordInputKey.value++
+  passwordInputKey.value++ // remount password input to reset show-password
 }
 
 async function handleLogin() {
   if (!loginFormRef.value) return
 
-  await loginFormRef.value.validate(async (valid: boolean) => {
+  // mark fields dirty
+  emailDirty.value = true
+  passwordDirty.value = true
+
+  // clean / format inputs
+  emailInput.value = formatEmail(emailInput.value)
+
+  // copy to form model
+  formModel.value.email = emailInput.value
+  formModel.value.password = passwordInput.value
+
+  await loginFormRef.value.validate(async (valid) => {
     if (!valid) return
 
     loading.value = true
-    await new Promise((resolve) => setTimeout(resolve, 500)) // simulate delay
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    const success = userStore.login(email.value, password.value)
+    const success = userStore.login(emailInput.value, passwordInput.value)
 
     if (success) {
       ElMessage.success('Login successful!')
@@ -113,19 +167,22 @@ onUnmounted(() => {
       </p>
 
       <el-form
+        v-if="dialogVisible"
         ref="loginFormRef"
-        :model="{ email, password }"
+        :model="formModel"
         :rules="{ email: emailRule, password: passwordRule }"
         label-position="top"
         class="login-form"
       >
         <el-form-item prop="email">
           <el-input
-            v-model="email"
+            v-model="emailInput"
             autocomplete="off"
             size="large"
             placeholder="Email"
             clearable
+            @input="markEmailDirty"
+            @blur="onEmailBlur"
             @keydown.enter.prevent="handleLogin"
           >
             <template #prefix>
@@ -137,13 +194,15 @@ onUnmounted(() => {
         <el-form-item prop="password">
           <el-input
             :key="passwordInputKey"
-            v-model="password"
+            v-model="passwordInput"
             type="password"
+            class="password"
             autocomplete="off"
             size="large"
             placeholder="Password"
             clearable
             show-password
+            @input="markPasswordDirty"
             @keydown.enter.prevent="handleLogin"
           >
             <template #prefix>
@@ -202,6 +261,10 @@ onUnmounted(() => {
   color: #6c584c;
   text-align: center;
   line-height: 1.4;
+}
+
+.password {
+  margin-top: 5px;
 }
 
 .footer-buttons {
