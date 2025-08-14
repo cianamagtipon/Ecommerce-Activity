@@ -19,7 +19,7 @@ const route = useRoute()
 const fallbackImage =
   'https://static.vecteezy.com/system/resources/thumbnails/008/695/917/small_2x/no-image-available-icon-simple-two-colors-template-for-no-image-or-picture-coming-soon-and-placeholder-illustration-isolated-on-white-background-vector.jpg'
 
-const totalItems = computed(() => cartStore.items.length)
+const totalItems = computed(() => cartStore.totalItems)
 const isDropdownOpen = ref<boolean>(false)
 const dropdownRef = ref()
 
